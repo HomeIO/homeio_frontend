@@ -1,22 +1,25 @@
 package main
 
 import (
-  "net/http"
+  //"net/http"
   "github.com/gin-gonic/gin"
-  "io/ioutil"
+  "html/template"
 )
 
 func main() {
-    r := gin.Default()
-    r.Static("/assets", "./assets")
-    r.GET("/", func(c *gin.Context) {
-        c.String(http.StatusOK, "hello")
-    })
+  r := gin.Default()
+  r.Static("/assets", "./assets")
+  //r.LoadHTMLGlob("templates/*")
+  
+  var layoutTemplate = "templates/layout.tmpl"
+  //r.SetHTMLTemplate(template.Must(template.ParseFiles("layout.tmpl")))
+  
+  r.GET("/", func(c *gin.Context) {
+    obj := gin.H{"title": "Main website"}
+    r.SetHTMLTemplate(template.Must(template.ParseFiles(layoutTemplate, "templates/index.tmpl")))
+    c.HTML(200, "layout", obj)
+  })
 
-   r.GET("/ping", func(c *gin.Context) {
-        c.HTML(http.StatusOK, "<script src=\"/main.js\"></script>")
-    })
-
-    // Listen and serve on 0.0.0.0:8080
-    r.Run(":8080")
+  // Listen and serve on 0.0.0.0:8080
+  r.Run(":8080")
 }
