@@ -8,12 +8,34 @@ import (
   "net"
   "fmt"
   "bufio"
-  //"os"
-  
-  //"encoding/json"
 )
 
+func getMeasDetailsJson() string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "measDetails;\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
+
+func getActionDetailsJson() string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "actionDetails;\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
+
+func getOverseerDetailsJson() string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "overseerDetails;\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
+
 func main() {
+  var measDetailsString string = getMeasDetailsJson()
+  var actionDetailsString string = getActionDetailsJson()
+  var overseerDetailsString string = getOverseerDetailsJson()
+  
   r := gin.Default()
   r.Static("/assets", "./assets")
   
@@ -23,11 +45,24 @@ func main() {
     c.HTML(http.StatusOK, "layout", obj)
   })
 
-  r.GET("/payload.json", func(c *gin.Context) {
-    conn, _ := net.Dial("tcp", "127.0.0.1:2005")
-    fmt.Fprintf(conn, "measDetails;\n")
-    message, _ := bufio.NewReader(conn).ReadString('\n')
-    c.String(http.StatusOK, message)
+  r.GET("/measDetails.json", func(c *gin.Context) {
+    c.String(http.StatusOK, measDetailsString)
+  })
+  
+  r.GET("/actionDetails.json", func(c *gin.Context) {
+    c.String(http.StatusOK, actionDetailsString)
+  })
+
+  r.GET("/overseerDetails.json", func(c *gin.Context) {
+    c.String(http.StatusOK, overseerDetailsString)
+  })
+  
+  
+  r.POST("/reload", func(c *gin.Context) {
+    measDetailsString = getMeasDetailsJson()
+    actionDetailsString = getActionDetailsJson()
+    overseerDetailsString = getOverseerDetailsJson()
+    c.String(http.StatusOK, "{}")
   })
 
   
