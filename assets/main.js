@@ -9,16 +9,15 @@
       return context.render("/assets/templates/index.haml").appendTo(context.$element());
     });
     this.get("#/measurements", function(context) {
-      return this.load("/measIndex.json").then(function(data) {
-        return context.partial("/assets/templates/meas_array.haml", function(html) {
+      return this.load("/api/meas.json").then(function(data) {
+        return context.partial("/assets/templates/meas/index.haml", function(html) {
           var index, meas, _i, _len, _ref, _results;
           $("#main").html(html);
           _ref = data["array"];
           _results = [];
           for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
             meas = _ref[index];
-            console.log(meas);
-            _results.push(context.render("/assets/templates/meas_partial.haml", {
+            _results.push(context.render("/assets/templates/meas/_index_item.haml", {
               meas: meas
             }, function(meas_html) {
               return $("#measArray").append(meas_html);
@@ -28,9 +27,73 @@
         });
       });
     });
-    return this.get("#/measurements/:measName", function(context) {
+    this.get("#/measurements/:measName", function(context) {
       context.app.swap('');
-      return context.log(this.params['measName']);
+      return this.load("/api/meas/" + this.params["measName"] + "/.json").then(function(data) {
+        var meas;
+        meas = data["object"];
+        return context.render("/assets/templates/meas/show.haml", {
+          meas: meas
+        }).appendTo(context.$element());
+      });
+    });
+    this.get("#/actions", function(context) {
+      return this.load("/api/actions.json").then(function(data) {
+        return context.partial("/assets/templates/actions/index.haml", function(html) {
+          var action, index, _i, _len, _ref, _results;
+          $("#main").html(html);
+          _ref = data["array"];
+          _results = [];
+          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+            action = _ref[index];
+            _results.push(context.render("/assets/templates/actions/_index_item.haml", {
+              action: action
+            }, function(action_html) {
+              return $("#actionArray").append(action_html);
+            }));
+          }
+          return _results;
+        });
+      });
+    });
+    this.get("#/actions/:actionName", function(context) {
+      context.app.swap('');
+      return this.load("/api/actions/" + this.params["actionName"] + "/.json").then(function(data) {
+        var action;
+        action = data["object"];
+        return context.render("/assets/templates/actions/show.haml", {
+          action: action
+        }).appendTo(context.$element());
+      });
+    });
+    this.get("#/overseers", function(context) {
+      return this.load("/api/overseers.json").then(function(data) {
+        return context.partial("/assets/templates/overseers/index.haml", function(html) {
+          var index, overseer, _i, _len, _ref, _results;
+          $("#main").html(html);
+          _ref = data["array"];
+          _results = [];
+          for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
+            overseer = _ref[index];
+            _results.push(context.render("/assets/templates/overseers/_index_item.haml", {
+              overseer: overseer
+            }, function(overseer_html) {
+              return $("#overseerArray").append(overseer_html);
+            }));
+          }
+          return _results;
+        });
+      });
+    });
+    return this.get("#/overseers/:overseerName", function(context) {
+      context.app.swap('');
+      return this.load("/api/overseers/" + this.params["overseerName"] + "/.json").then(function(data) {
+        var overseer;
+        overseer = data["object"];
+        return context.render("/assets/templates/overseers/show.haml", {
+          overseer: overseer
+        }).appendTo(context.$element());
+      });
     });
   });
 

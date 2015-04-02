@@ -1,0 +1,24 @@
+- var header_class = ""
+- if (meas.priority > 0) {header_class = "meas-header-important" }
+
+.header
+  %h2
+    Measurements
+  %h1{class: header_class}
+    = meas.name
+
+.content
+  %p
+    = meas.value
+    = "="
+    
+    = "("
+    = meas.raw
+    = "+"
+    = meas.coefficientOffset
+    = ")"
+    = "*"
+    = meas.coefficientLinear
+
+  %p
+    = meas.buffer.count

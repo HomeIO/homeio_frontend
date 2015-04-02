@@ -1,14 +1,25 @@
-.meas-button {
+.homeio-button {
   color: white;
   border-radius: 4px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-  background: rgb(28, 184, 65);
+  background: rgb(68, 85, 184);
   width: 90%;
   margin: 10px;
   padding: 10px;
-  
+}
+
+.meas-button {
   .meas-value {
     font-size: 200%;
   }
 }
 
+
+.meas-button-important {
+  background: rgb(88, 184, 99);
+}
+
+
+.meas-header-important {
+  color: red;
+}
