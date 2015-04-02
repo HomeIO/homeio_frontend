@@ -1,36 +1,24 @@
-class @HomeIO
-  constructor: ->
-
-  reload: () ->
-    @getMeasDetails()
+app = $.sammy("#main", ->
+  @use "Haml"
   
-  clearMeas: () ->
-    $("#payload").html("")
-  
-  registerMeas: (measDetail) =>
-    measHtml = "<div class=\"meas\" data-meas=\"" + measDetail["name"] + "\">"
-    
-    measHtml += "<div class=\"measName\">"
-    measHtml += measDetail["name"]
-    measHtml += "</div>"
+  @get "#/", (context) ->
+    context.app.swap('')
+    context.render("/assets/templates/index.haml",
+    ).appendTo context.$element()
 
-    measHtml += "<div class=\"measValue\">"
-    measHtml += measDetail["value"]
-    measHtml += "</div>"
-    
-    measHtml += "</div>"
-    $("#payload").append(measHtml)
-  
-  getMeasDetails: () ->
-    @clearMeas
-    $.getJSON "/measDetails.json", (data) =>
-      for measDetail in data["array"]
-        @registerMeas(measDetail)
+  @get "#/measurements", (context) ->
+    @load("/measDetails.json").then (data) ->
+      context.app.swap('')
+      for meas, index in data["array"]
+        context.render("/assets/templates/meas.haml",
+          meas: meas
+          index: index
+        ).appendTo context.$element()
 
-  updateMeasValues: () ->
-    $("#payload").html("")
-  
-    
+  @get "#/measurements/:measName", (context) ->
+    context.app.swap('')
+    context.log(@params['measName'])
 
-h = new HomeIO()
-h.reload()
+)
+$ ->
+  app.run "#/"

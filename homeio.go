@@ -38,10 +38,11 @@ func main() {
   
   r := gin.Default()
   r.Static("/assets", "./assets")
+  r.SetHTMLTemplate(template.Must(template.ParseFiles("templates/layout.tmpl")))
   
   r.GET("/", func(c *gin.Context) {
     obj := gin.H{"title": "Main website"}
-    r.SetHTMLTemplate(template.Must(template.ParseFiles("templates/layout.tmpl", "templates/index.tmpl")))
+    
     c.HTML(http.StatusOK, "layout", obj)
   })
 
