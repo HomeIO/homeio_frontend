@@ -10,23 +10,6 @@
     });
     this.get("#/measurements", function(context) {
       return this.load("/measIndex.json").then(function(data) {
-        var index, meas, _i, _len, _ref, _results;
-        context.app.swap('');
-        _ref = data["array"];
-        _results = [];
-        for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
-          meas = _ref[index];
-          context.log(meas);
-          _results.push(context.render("/assets/templates/meas_partial.haml", {
-            meas: meas,
-            index: index
-          }).appendTo(context.$element()));
-        }
-        return _results;
-      });
-    });
-    this.get("#/measurements2", function(context) {
-      return this.load("/measIndex.json").then(function(data) {
         return context.partial("/assets/templates/meas_array.haml", function(html) {
           var index, meas, _i, _len, _ref, _results;
           $("#main").html(html);
@@ -43,14 +26,6 @@
           }
           return _results;
         });
-      });
-    });
-    this.get("#/measurements3", function(context) {
-      return this.load("/measIndex.json").then(function(data) {
-        context.app.swap('');
-        return context.render("/assets/templates/meas_array.haml", {
-          data: data
-        }).appendTo(context.$element());
       });
     });
     return this.get("#/measurements/:measName", function(context) {

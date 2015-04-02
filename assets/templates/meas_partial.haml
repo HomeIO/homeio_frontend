@@ -1,6 +1,6 @@
-.meas.pure-u-1-5
-  .meas-name
-    %a{href: "#/measurements/" + meas.name}
+.pure-u-1-3
+  %a{href: "#/measurements/" + meas.name, class: "meas-button pure-button button-xlarge"}
+    .meas-name
       = meas.name
-  .meas-value
-    = meas.value
+    .meas-value
+      = Number(parseFloat(meas.value)).toFixed(2)
