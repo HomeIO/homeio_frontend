@@ -8,17 +8,32 @@
     = meas.name
 
 .content
-  %p
-    = meas.value
-    = "="
-    
-    = "("
-    = meas.raw
-    = "+"
-    = meas.coefficientOffset
-    = ")"
-    = "*"
-    = meas.coefficientLinear
+  %table.pure-table.homeio-table
+    %tbody
+      %tr
+        %td Value
+        %td
+          = meas.value
 
-  %p
-    = meas.buffer.count
+          = " = "
+    
+          = " ( "
+          = meas.raw
+          = " + "
+          = meas.coefficientOffset
+          = " ) "
+          = " * "
+          = meas.coefficientLinear
+
+
+      %tr
+        %td priority
+        %td= meas.priority
+
+      %tr
+        %td firstTime
+        %td= meas.buffer.firstTime
+
+      %tr
+        %td count
+        %td= meas.buffer.count

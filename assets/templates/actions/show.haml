@@ -3,3 +3,23 @@
     Actions
   %h1
     = action.name
+
+
+.content
+  %table.pure-table.homeio-table
+    %tbody
+      %tr
+        %td Name
+        %td= action.name
+
+      %tr
+        %td executionCount
+        %td= action.executionCount
+
+      %tr
+        %td failedCount
+        %td= action.failedCount
+
+      %tr
+        %td lastExecutedAt()
+        %td= action["lastExecutedAt()"]

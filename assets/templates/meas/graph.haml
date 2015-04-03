@@ -1,0 +1,11 @@
+- var header_class = ""
+- if (meas.priority > 0) {header_class = "meas-header-important" }
+
+.header
+  %h2
+    Measurements
+  %h1{class: header_class}
+    = meas.name
+
+.content
+  #graph
