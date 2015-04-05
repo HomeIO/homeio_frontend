@@ -2,80 +2,6 @@
 (function() {
   var app;
 
-  this.HomeIOMeasGraph = (function() {
-
-    function HomeIOMeasGraph() {}
-
-    HomeIOMeasGraph.prototype.meas_graph = function(meas_data, graph_data, element) {
-      var buffer, center_unix_rel_time, chart_length, coefficient_linear, coefficient_offset, current_time, d, factor, flot_options, i, interval, last_time, latest_unix_rel_time, max_page, new_d, new_data, offset_unix_rel_time, oldest_unix_rel_time, page, smooth_data, time_offset, time_offset_last, time_range, unit, x, y, _i, _len;
-      console.log(graph_data);
-      console.log(meas_data);
-      flot_options = {
-        series: {
-          lines: {
-            show: true,
-            fill: true
-          },
-          points: {
-            show: false
-          }
-        },
-        legend: {
-          show: true
-        },
-        grid: {
-          clickable: false,
-          hoverable: true
-        }
-      };
-      page = 0;
-      buffer = graph_data["data"];
-      coefficient_linear = meas_data["object"]["coefficientLinear"];
-      coefficient_offset = meas_data["object"]["coefficientOffset"];
-      interval = graph_data["interval"];
-      last_time = graph_data["lastTime"];
-      current_time = (new Date).getTime();
-      time_offset = last_time - current_time - page * interval * buffer.length;
-      time_offset_last = current_time - last_time;
-      chart_length = $(element).width();
-      max_page = 1;
-      unit = "unit";
-      new_data = [];
-      i = 0;
-      for (_i = 0, _len = buffer.length; _i < _len; _i++) {
-        d = buffer[_i];
-        x = -1 * i * interval + time_offset;
-        y = (parseFloat(d) + coefficient_offset) * coefficient_linear;
-        console.log(d, coefficient_offset, coefficient_linear);
-        new_d = [x, y];
-        new_data.push(new_d);
-        i += 1;
-      }
-      if (new_data.length > chart_length) {
-        factor = Math.ceil(parseFloat(new_data.length) / parseFloat(chart_length));
-        smooth_data = averageData(new_data, factor + smooth);
-        new_data = smooth_data;
-      }
-      if (buffer.length > 0) {
-        time_range = new_data[0][0] - new_data[new_data.length - 1][0];
-      }
-      latest_unix_rel_time = new_data[0][0];
-      oldest_unix_rel_time = new_data[new_data.length - 1][0];
-      center_unix_rel_time = (latest_unix_rel_time + oldest_unix_rel_time) / 2.0;
-      offset_unix_rel_time = latest_unix_rel_time - center_unix_rel_time;
-      new_data = {
-        data: new_data,
-        color: "#55f",
-        label: name
-      };
-      console.log(new_data);
-      return $.plot($(element), [new_data], flot_options);
-    };
-
-    return HomeIOMeasGraph;
-
-  })();
-
   app = $.sammy("#main", function() {
     this.use("Haml");
     this.get("#/", function(context) {
@@ -111,8 +37,21 @@
         }).appendTo(context.$element());
       });
     });
+    this.get("#/measurements/:measName/graph3", function(context) {
+      var _this = this;
+      context.app.swap('');
+      context.render("/assets/templates/meas/graph2.haml", {
+        meas_name: this.params["measName"]
+      }).then(function(html) {});
+      return html.appendTo(context.$element());
+    });
     this.get("#/measurements/:measName/graph", function(context) {
       context.app.swap('');
+      return context.render("/assets/templates/meas/graph2.haml", {
+        meas_name: this.params["measName"]
+      }).appendTo(context.$element());
+    });
+    this.get("#/measurements/:measName/graph4", function(context) {
       return this.load("/api/meas/" + this.params["measName"] + "/.json").then(function(meas_data) {
         var meas;
         meas = meas_data["object"];
@@ -121,9 +60,9 @@
             meas: meas,
             graph_data: graph_data
           }).appendTo(context.$element()).then(function(html) {
-            var h;
-            h = new HomeIOMeasGraph;
-            return h.meas_graph(meas_data, graph_data, "#graph");
+            var g;
+            g = new HomeIOMeasGraphOld;
+            return g.meas_graph(meas_data, graph_data, "#graph");
           });
         });
       });

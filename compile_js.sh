@@ -1,6 +1,6 @@
 while true 
 do
-  inotifywait -e modify assets/main.coffee 
+  inotifywait -e modify assets/coffee/*.coffee 
   echo "compiling `date`"
-  coffee -c assets/main.coffee
+  coffee -c assets/coffee/*.coffee
 done

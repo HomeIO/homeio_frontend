@@ -1,2 +1,2 @@
-coffee -c assets/main.coffee
+coffee -c assets/*.coffee
 go run homeio.go
