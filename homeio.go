@@ -11,6 +11,7 @@ import (
   "crypto/md5"
   "encoding/hex"
   "io/ioutil"
+  "strings"
 )
 
 type PasswordForm struct {
@@ -26,7 +27,7 @@ func checkPassword(hashedPassword string) bool {
   hasher.Write([]byte(hashedPassword))
   h := hex.EncodeToString(hasher.Sum(nil))
 
-  if h == superHashedPassword {
+  if strings.TrimSpace(h) == strings.TrimSpace(superHashedPassword) {
     //fmt.Print("password OK\n")    
     return true
   } else {
