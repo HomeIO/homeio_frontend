@@ -7,9 +7,10 @@
     function HomeIOMeasGraph() {
       this.getRaw = __bind(this.getRaw, this);
       this.buffer = [];
-      this.periodicInterval = 1000;
+      this.periodicInterval = 2000;
       this.maxBufferSize = 100;
       this.onlyOneRawValue = false;
+      this.showControls = true;
       this.flot_options = {
         series: {
           lines: {
@@ -31,21 +32,53 @@
     }
 
     HomeIOMeasGraph.prototype.prepare = function() {
-      return this.getMeas();
+      this.getMeas();
+      return this.prepareHtml();
+    };
+
+    HomeIOMeasGraph.prototype.prepareHtml = function() {
+      if (this.showControls) {
+        this.elementContainer = this.element;
+        this.elementGraph = "#" + this.meas_name + "_graph";
+        this.elementControls = "#" + this.meas_name + "_controls";
+        this.elementLastTime = "#" + this.meas_name + "_lastTime";
+        $("<div\>", {
+          id: this.elementGraph.replace("#", ""),
+          style: "width: " + $(this.elementContainer).width() + "px; height: " + $(this.elementContainer).height() + "px"
+        }).appendTo(this.elementContainer);
+        console.log($(this.elementContainer));
+        $("<div\>", {
+          id: this.elementControls.replace("#", ""),
+          "class": "graph-control"
+        }).appendTo(this.elementContainer);
+        return $("<div\>", {
+          id: this.elementLastTime.replace("#", ""),
+          "class": "graph-last-time"
+        }).appendTo(this.elementControls);
+      } else {
+        return this.elementGraph = this.element;
+      }
     };
 
     HomeIOMeasGraph.prototype.currentTime = function() {
       return (new Date()).getTime();
     };
 
+    HomeIOMeasGraph.prototype.timeToString = function(t) {
+      var date, formattedTime;
+      date = new Date(parseInt(t));
+      formattedTime = date.getHours() + ':' + ('0' + date.getMinutes().toString()).slice(-2) + ':' + ('0' + date.getSeconds().toString()).slice(-2);
+      return formattedTime;
+    };
+
     HomeIOMeasGraph.prototype.getMeas = function() {
       var _this = this;
       return $.getJSON("/api/meas/" + this.meas_name + "/.json", function(data) {
         _this.meas = data.object;
-        _this.getFrom = _this.meas.buffer.lastTime;
+        _this.interval = _this.meas.buffer.interval;
         _this.getTo = _this.meas.buffer.lastTime;
+        _this.getFrom = _this.meas.buffer.lastTime - _this.maxBufferSize * _this.interval;
         _this.localTimeOffset = _this.meas.buffer.lastTime - _this.currentTime();
-        console.log(_this.localTimeOffset);
         _this.getRaw();
         return setInterval(_this.getRaw, _this.periodicInterval);
       });
@@ -63,8 +96,10 @@
       return $.getJSON(url, function(data) {
         _this.getFrom = _this.getTo;
         _this.interval = data.interval;
+        _this.lastTime = data.lastTime;
         _this.addToBuffer(data.data);
-        return _this.renderGraph();
+        _this.renderGraph();
+        return _this.afterRender();
       });
     };
 
@@ -104,7 +139,13 @@
         this.plot.setupGrid();
         return this.plot.draw();
       } else {
-        return this.plot = $.plot($(this.element), [new_data], this.flot_options);
+        return this.plot = $.plot($(this.elementGraph), [new_data], this.flot_options);
+      }
+    };
+
+    HomeIOMeasGraph.prototype.afterRender = function() {
+      if (this.elementLastTime) {
+        return $(this.elementLastTime).html(this.timeToString(this.lastTime));
       }
     };
 

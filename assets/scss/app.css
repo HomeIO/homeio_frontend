@@ -23,3 +23,11 @@
 #graph {
   height: 400px;
   min-height: 400px; }
+
+.graph-control {
+  position: relative; }
+
+.graph-last-time {
+  position: absolute;
+  display: inline-block;
+  right: 0px; }

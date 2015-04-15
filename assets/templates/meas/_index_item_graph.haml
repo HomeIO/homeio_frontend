@@ -1,0 +1,10 @@
+:if meas.priority > 0
+  %div{id: meas.name + "_graph", style: "width: 300px; height: 200px;", class: "pure-u-1-2"}
+
+  :javascript
+    var g = new HomeIOMeasGraph;
+    g.meas_name = "#{meas.name}";
+    g.element = "##{meas.name + "_graph"}";
+    g.periodicInterval = 4000;
+    g.maxBufferSize = 200;
+    g.prepare();

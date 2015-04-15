@@ -11,16 +11,25 @@
     this.get("#/measurements", function(context) {
       return this.load("/api/meas.json").then(function(data) {
         return context.partial("/assets/templates/meas/index.haml", function(html) {
-          var index, meas, _i, _len, _ref, _results;
+          var index, meas, _i, _j, _len, _len1, _ref, _ref1, _results;
           $("#main").html(html);
           _ref = data["array"];
-          _results = [];
           for (index = _i = 0, _len = _ref.length; _i < _len; index = ++_i) {
             meas = _ref[index];
-            _results.push(context.render("/assets/templates/meas/_index_item.haml", {
+            context.render("/assets/templates/meas/_index_item.haml", {
               meas: meas
             }, function(meas_html) {
               return $("#measArray").append(meas_html);
+            });
+          }
+          _ref1 = data["array"];
+          _results = [];
+          for (index = _j = 0, _len1 = _ref1.length; _j < _len1; index = ++_j) {
+            meas = _ref1[index];
+            _results.push(context.render("/assets/templates/meas/_index_item_graph.haml", {
+              meas: meas
+            }, function(meas_html) {
+              return $("#measGraphArray").append(meas_html);
             }));
           }
           return _results;
@@ -37,35 +46,11 @@
         }).appendTo(context.$element());
       });
     });
-    this.get("#/measurements/:measName/graph3", function(context) {
-      var _this = this;
-      context.app.swap('');
-      context.render("/assets/templates/meas/graph2.haml", {
-        meas_name: this.params["measName"]
-      }).then(function(html) {});
-      return html.appendTo(context.$element());
-    });
     this.get("#/measurements/:measName/graph", function(context) {
       context.app.swap('');
-      return context.render("/assets/templates/meas/graph2.haml", {
+      return context.render("/assets/templates/meas/graph_detailed.haml", {
         meas_name: this.params["measName"]
       }).appendTo(context.$element());
-    });
-    this.get("#/measurements/:measName/graph4", function(context) {
-      return this.load("/api/meas/" + this.params["measName"] + "/.json").then(function(meas_data) {
-        var meas;
-        meas = meas_data["object"];
-        return this.load("/api/meas/" + meas.name + "/raw_for_index/0/100/.json").then(function(graph_data) {
-          return context.render("/assets/templates/meas/graph.haml", {
-            meas: meas,
-            graph_data: graph_data
-          }).appendTo(context.$element()).then(function(html) {
-            var g;
-            g = new HomeIOMeasGraphOld;
-            return g.meas_graph(meas_data, graph_data, "#graph");
-          });
-        });
-      });
     });
     this.get("#/actions", function(context) {
       return this.load("/api/actions.json").then(function(data) {

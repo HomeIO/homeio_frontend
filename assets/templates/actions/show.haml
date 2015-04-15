@@ -4,7 +4,6 @@
   %h1
     = action.name
 
-
 .content
   %table.pure-table.homeio-table
     %tbody
@@ -22,4 +21,9 @@
 
       %tr
         %td lastExecutedAt()
-        %td= action["lastExecutedAt()"]
+        %td= action.lastExecutedAt
+
+  %p
+    %form{action: "#/actions/execute", method: "POST"}
+      %input{type: "text", name: "password"}
+      %input{type: "submit", value: "Execute " + action.name}

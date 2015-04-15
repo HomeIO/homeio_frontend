@@ -13,6 +13,11 @@ app = $.sammy("#main", ->
         for meas, index in data["array"]
           context.render "/assets/templates/meas/_index_item.haml", {meas: meas}, (meas_html) ->
             $("#measArray").append meas_html
+
+        for meas, index in data["array"]
+          context.render "/assets/templates/meas/_index_item_graph.haml", {meas: meas}, (meas_html) ->
+            $("#measGraphArray").append meas_html
+
             
   @get "#/measurements/:measName", (context) ->
     context.app.swap('')
@@ -22,35 +27,12 @@ app = $.sammy("#main", ->
         meas: meas
       ).appendTo context.$element()
 
-  @get "#/measurements/:measName/graph3", (context) ->
-    context.app.swap('')
-    context.render("/assets/templates/meas/graph2.haml",
-        meas_name: @params["measName"]           
-      ).then (html) =>
-      #g = new HomeIOMeasGraph
-      #g.name(@params["measName"])
-      #g.element = "#graph"
-      #g.start()
-      html
-    .appendTo context.$element()  
-
   @get "#/measurements/:measName/graph", (context) ->
     context.app.swap('')
-    context.render("/assets/templates/meas/graph2.haml",
+    context.render("/assets/templates/meas/graph_detailed.haml",
       meas_name: @params["measName"]
     ).appendTo context.$element()  
       
-  @get "#/measurements/:measName/graph4", (context) ->
-    @load("/api/meas/" + @params["measName"] + "/.json").then (meas_data) ->
-      meas = meas_data["object"]
-      @load("/api/meas/" + meas.name + "/raw_for_index/0/100/.json").then (graph_data) ->
-        context.render("/assets/templates/meas/graph.haml",
-          meas: meas
-          graph_data: graph_data
-        ).appendTo(context.$element()).then (html) ->
-          g = new HomeIOMeasGraphOld
-          g.meas_graph(meas_data, graph_data, "#graph")
-          
   @get "#/actions", (context) ->
     @load("/api/actions.json").then (data) ->
       context.partial "/assets/templates/actions/index.haml", (html) ->
@@ -67,6 +49,8 @@ app = $.sammy("#main", ->
         action: action
       ).appendTo context.$element()
 
+  @post('#/actions/execute', (context) ->
+    context.log @params['password']
 
   @get "#/overseers", (context) ->
     @load("/api/overseers.json").then (data) ->

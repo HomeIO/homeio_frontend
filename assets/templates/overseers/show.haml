@@ -3,3 +3,57 @@
     Overseer
   %h1
     = overseer.name
+
+.content
+  .pure-g
+    .pure-u-1-2
+      %a{href: "#/actions/" + overseer.actionName, class: "homeio-button action-button pure-button button-xlarge "}
+        .action-name
+          = overseer.actionName
+
+    .pure-u-1-2
+      %a{href: "#/measurements/" + overseer.measName, class: "homeio-button action-button pure-button button-xlarge "}
+        .meas-name
+          = overseer.measName
+
+  %table.pure-table.homeio-table
+    %tbody
+      %tr
+        %td Name
+        %td
+          = overseer.name
+
+      %tr
+        %td actionName
+        %td
+          = overseer.actionName
+
+      %tr
+        %td currentValue
+        %td
+          = overseer.currentValue
+
+      %tr
+        %td currentAvgValue
+        %td
+          = overseer.currentAvgValue
+
+      %tr
+        %td isMax
+        %td
+          = overseer.isMax
+
+      %tr
+        %td minExecInterval
+        %td
+          = overseer.minExecInterval
+
+      %tr
+        %td thresholdValue
+        %td
+          = overseer.thresholdValue
+
+      %tr
+        %td windowSize
+        %td
+          = overseer.windowSize

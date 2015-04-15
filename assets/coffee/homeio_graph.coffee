@@ -3,11 +3,13 @@ class @HomeIOMeasGraph
     # graph is rendered from
     @buffer = []
     # get raw values every miliseconds
-    @periodicInterval = 1000
+    @periodicInterval = 2000
     # store max measurements in class buffer
     @maxBufferSize = 100
     
     @onlyOneRawValue = false
+
+    @showControls = true
 
     @flot_options =
       series:
@@ -24,9 +26,46 @@ class @HomeIOMeasGraph
   
   prepare: () ->
     @getMeas()
+    @prepareHtml()
+
+  prepareHtml: () ->
+    if @showControls
+      @elementContainer = @element
+      @elementGraph = "#" + @meas_name + "_graph"
+      @elementControls = "#" + @meas_name + "_controls"
+      @elementLastTime = "#" + @meas_name + "_lastTime"
+      
+      $("<div\>",
+        id: @elementGraph.replace("#","")
+        style: "width: " + $(@elementContainer).width() + "px; height: " + $(@elementContainer).height() + "px"
+      ).appendTo(@elementContainer)  
+
+      console.log($(@elementContainer))
+      
+
+      $("<div\>",
+        id: @elementControls.replace("#","")
+        class: "graph-control"
+      ).appendTo(@elementContainer)      
+
+      # last time
+      $("<div\>",
+        id: @elementLastTime.replace("#","")
+        class: "graph-last-time"
+      ).appendTo(@elementControls)      
+      
+      
+    else
+      @elementGraph = @element
+    
 
   currentTime: () ->
     (new Date()).getTime()
+    
+  timeToString: (t) ->
+    date = new Date(parseInt(t))
+    formattedTime = date.getHours() + ':' + ('0' + date.getMinutes().toString()).slice(-2) + ':' + ('0' + date.getSeconds().toString()).slice(-2)
+    formattedTime
 
   getMeas: () ->
     $.getJSON "/api/meas/" + @meas_name + "/.json",  (data) =>
@@ -34,11 +73,13 @@ class @HomeIOMeasGraph
       #console.log(@meas)
       
       # time for first raw data get
-      @getFrom = @meas.buffer.lastTime
+      @interval = @meas.buffer.interval
       @getTo = @meas.buffer.lastTime
+      @getFrom = @meas.buffer.lastTime - @maxBufferSize * @interval
+      
       # add to localtime to get backend time
       @localTimeOffset = @meas.buffer.lastTime - @currentTime()
-      console.log @localTimeOffset
+      #console.log @localTimeOffset
       
       @getRaw()
       setInterval @getRaw, @periodicInterval
@@ -58,9 +99,12 @@ class @HomeIOMeasGraph
       @getFrom = @getTo
       # store interval for time calculation
       @interval = data.interval
+      # used in controls
+      @lastTime = data.lastTime
       
       @addToBuffer(data.data)
       @renderGraph()
+      @afterRender()
       
       
   addToBuffer: (array) ->
@@ -92,4 +136,10 @@ class @HomeIOMeasGraph
       @plot.setupGrid();
       @plot.draw()
     else
-      @plot = $.plot $(@element), [new_data], @flot_options      
+      @plot = $.plot $(@elementGraph), [new_data], @flot_options      
+
+        
+      
+  afterRender: () ->
+    if @elementLastTime
+      $(@elementLastTime).html(@timeToString(@lastTime))
