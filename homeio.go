@@ -8,7 +8,32 @@ import (
   "fmt"
   "bufio"
   "strconv"
+  "crypto/md5"
+  "encoding/hex"
+  "io/ioutil"
 )
+
+type PasswordForm struct {
+  password string
+  name string
+}
+
+func checkPassword(hashedPassword string) bool {
+  dat, _ := ioutil.ReadFile("password.txt")
+  superHashedPassword := string(dat)
+
+  hasher := md5.New()
+  hasher.Write([]byte(hashedPassword))
+  h := hex.EncodeToString(hasher.Sum(nil))
+
+  if h == superHashedPassword {
+    //fmt.Print("password OK\n")    
+    return true
+  } else {
+    return false
+  }
+}
+
 
 func getMeasIndexJson() string {
   conn, _ := net.Dial("tcp", "127.0.0.1:2005")
@@ -53,6 +78,17 @@ func getActionShowJson(name string) string {
   return message
 }
 
+func postActionExecuteJson(name string, hashedPassword string) string {
+  if checkPassword(hashedPassword) {
+    conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+    fmt.Fprintf(conn, "actionExecute;" + name + ";\n")
+    message, _ := bufio.NewReader(conn).ReadString('\n')
+    return message
+  } else {
+    return "{\"status\":1,\"action\":\"" + name + "\",\"reason\":\"wrong_password\"}"
+  }
+}
+
 func getOverseerIndexJson() string {
   conn, _ := net.Dial("tcp", "127.0.0.1:2005")
   fmt.Fprintf(conn, "overseerIndex;\n")
@@ -68,6 +104,7 @@ func getOverseerShowJson(name string) string {
 }
 
 
+
 func main() {
   r := gin.Default()
   r.Static("/assets", "./assets")
@@ -75,10 +112,17 @@ func main() {
 
   // home#index
   r.GET("/", func(c *gin.Context) {
-    obj := gin.H{"title": "Main website"}
+    obj := gin.H{}
     c.HTML(http.StatusOK, "layout", obj)
   })
 
+  // home#index - sammy.js
+  r.POST("/", func(c *gin.Context) {
+    obj := gin.H{}
+    c.HTML(http.StatusOK, "layout", obj)
+  })
+
+  // API
   // meas#index
   r.GET("/api/meas.json", func(c *gin.Context) {
     c.String(http.StatusOK, getMeasIndexJson())
@@ -117,6 +161,16 @@ func main() {
     var actionName string = c.Params.ByName("name")
     c.String(http.StatusOK, getActionShowJson(actionName))
   })
+
+  // actions#execute
+  r.POST("/api/actions/:name/execute.json", func(c *gin.Context) {
+    var actionName string = c.Params.ByName("name")
+    
+    var pf PasswordForm
+    c.Bind(&pf)
+    c.String(http.StatusOK, postActionExecuteJson(actionName, c.Request.Form.Get("password") ) )
+  })
+
 
   // overseers#index
   r.GET("/api/overseers.json", func(c *gin.Context) {
