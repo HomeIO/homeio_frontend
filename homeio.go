@@ -57,6 +57,13 @@ func getMeasRawForTimeJson(name string, from uint64,to uint64) string {
   return message
 }
 
+func getMeasRawHistoryForTimeJson(name string, from uint64,to uint64, maxSize uint64) string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "measRawHistoryForTime;" + name + ";" + strconv.FormatUint(from, 10) + ";" + strconv.FormatUint(to, 10) + ";" + strconv.FormatUint(maxSize, 10) + ";\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
+
 func getMeasRawForIndexJson(name string, from uint64,to uint64) string {
   conn, _ := net.Dial("tcp", "127.0.0.1:2005")
   fmt.Fprintf(conn, "measRawForIndex;" + name + ";" + strconv.FormatUint(from, 10) + ";" + strconv.FormatUint(to, 10) + ";\n")
@@ -149,6 +156,15 @@ func main() {
     from, _ := strconv.ParseUint(c.Params.ByName("from"), 10, 64)
     to, _ := strconv.ParseUint(c.Params.ByName("to"), 10, 64)
     c.String(http.StatusOK, getMeasRawForIndexJson(measName, from, to))
+  })
+
+  // meas#raw_for_time
+  r.GET("/api/meas/:name/raw_history_for_time/:from/:to/:maxSize/.json", func(c *gin.Context) {
+    measName := c.Params.ByName("name")
+    from, _ := strconv.ParseUint(c.Params.ByName("from"), 10, 64)
+    to, _ := strconv.ParseUint(c.Params.ByName("to"), 10, 64)
+    maxSize, _ := strconv.ParseUint(c.Params.ByName("maxSize"), 10, 64)
+    c.String(http.StatusOK, getMeasRawHistoryForTimeJson(measName, from, to, maxSize))
   })
 
 

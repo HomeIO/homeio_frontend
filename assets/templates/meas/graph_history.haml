@@ -1,0 +1,15 @@
+.content
+  %p
+    History graph
+
+  #graph
+
+:javascript
+  var g = new HomeIOMeasGraph;
+  g.meas_name = "#{meas_name}";
+  g.element = "#graph";
+  g.historyMode = true;
+  g.historyLength = 12*3600*1000;
+  g.periodicInterval = 3600000;
+  g.maxBufferSize = 800;
+  g.prepare();

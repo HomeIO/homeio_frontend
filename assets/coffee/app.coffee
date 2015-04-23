@@ -32,6 +32,12 @@ app = $.sammy("#main", ->
     context.render("/assets/templates/meas/graph_detailed.haml",
       meas_name: @params["measName"]
     ).appendTo context.$element()  
+
+  @get "#/measurements/:measName/history", (context) ->
+    context.app.swap('')
+    context.render("/assets/templates/meas/graph_history.haml",
+      meas_name: @params["measName"]
+    ).appendTo context.$element()  
       
   @get "#/actions", (context) ->
     @load("/api/actions.json").then (data) ->

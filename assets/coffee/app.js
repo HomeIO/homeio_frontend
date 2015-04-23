@@ -52,6 +52,12 @@
         meas_name: this.params["measName"]
       }).appendTo(context.$element());
     });
+    this.get("#/measurements/:measName/history", function(context) {
+      context.app.swap('');
+      return context.render("/assets/templates/meas/graph_history.haml", {
+        meas_name: this.params["measName"]
+      }).appendTo(context.$element());
+    });
     this.get("#/actions", function(context) {
       return this.load("/api/actions.json").then(function(data) {
         return context.partial("/assets/templates/actions/index.haml", function(html) {

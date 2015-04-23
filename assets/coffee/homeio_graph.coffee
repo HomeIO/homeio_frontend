@@ -7,7 +7,12 @@ class @HomeIOMeasGraph
     # store max measurements in class buffer
     @maxBufferSize = 100
     
+    # get only 1 new value when using periodic
     @onlyOneRawValue = false
+    
+    # uses history mode - get measurements for big amount of time, not all, but every some
+    @historyMode = false
+    @historyLength = 3600*1000
 
     @showControls = true
 
@@ -89,6 +94,9 @@ class @HomeIOMeasGraph
     
     if @onlyOneRawValue
       url = "/api/meas/" + @meas.name + "/raw_for_index/0/0/.json"
+    else if @historyMode
+      @getFrom = @getTo - @historyLength
+      url = "/api/meas/" + @meas.name + "/raw_history_for_time/" + @getFrom + "/" + @getTo + "/" + @maxBufferSize + "/.json"
     else
       url = "/api/meas/" + @meas.name + "/raw_for_time/" + @getFrom + "/" + @getTo + "/.json"
     

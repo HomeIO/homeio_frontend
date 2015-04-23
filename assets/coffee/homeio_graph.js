@@ -10,6 +10,8 @@
       this.periodicInterval = 2000;
       this.maxBufferSize = 100;
       this.onlyOneRawValue = false;
+      this.historyMode = false;
+      this.historyLength = 3600 * 1000;
       this.showControls = true;
       this.flot_options = {
         series: {
@@ -90,6 +92,9 @@
       this.getTo = this.currentTime() + this.localTimeOffset;
       if (this.onlyOneRawValue) {
         url = "/api/meas/" + this.meas.name + "/raw_for_index/0/0/.json";
+      } else if (this.historyMode) {
+        this.getFrom = this.getTo - this.historyLength;
+        url = "/api/meas/" + this.meas.name + "/raw_history_for_time/" + this.getFrom + "/" + this.getTo + "/" + this.maxBufferSize + "/.json";
       } else {
         url = "/api/meas/" + this.meas.name + "/raw_for_time/" + this.getFrom + "/" + this.getTo + "/.json";
       }

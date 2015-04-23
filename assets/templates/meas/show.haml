@@ -11,6 +11,12 @@
   %p
     %a{href: "#/measurements/" + meas.name + "/graph", class: "pure-button button-xlarge "}
       Graph
+    
+    &nbsp;
+
+    %a{href: "#/measurements/" + meas.name + "/history", class: "pure-button button-xlarge "}
+      History graph
+
 
   %table.pure-table.homeio-table
     %tbody
@@ -29,6 +35,9 @@
           = " * "
           = meas.coefficientLinear
 
+      %tr
+        %td Average value
+        %td= meas.currentAvgValue
 
       %tr
         %td priority
