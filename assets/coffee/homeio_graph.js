@@ -13,6 +13,8 @@
       this.historyMode = false;
       this.historyLength = 3600 * 1000;
       this.showControls = true;
+      this.xUnit = "seconds";
+      this.yUnit = "";
       this.flot_options = {
         series: {
           lines: {
@@ -44,6 +46,7 @@
         this.elementGraph = "#" + this.meas_name + "_graph";
         this.elementControls = "#" + this.meas_name + "_controls";
         this.elementLastTime = "#" + this.meas_name + "_lastTime";
+        this.elementUnit = "#" + this.meas_name + "_Unit";
         $("<div\>", {
           id: this.elementGraph.replace("#", ""),
           style: "width: " + $(this.elementContainer).width() + "px; height: " + $(this.elementContainer).height() + "px"
@@ -53,9 +56,13 @@
           id: this.elementControls.replace("#", ""),
           "class": "graph-control"
         }).appendTo(this.elementContainer);
-        return $("<div\>", {
+        $("<div\>", {
           id: this.elementLastTime.replace("#", ""),
           "class": "graph-last-time"
+        }).appendTo(this.elementControls);
+        return $("<div\>", {
+          id: this.elementUnit.replace("#", ""),
+          "class": "graph-units"
         }).appendTo(this.elementControls);
       } else {
         return this.elementGraph = this.element;
@@ -80,6 +87,7 @@
         _this.interval = _this.meas.buffer.interval;
         _this.getTo = _this.meas.buffer.lastTime;
         _this.getFrom = _this.meas.buffer.lastTime - _this.maxBufferSize * _this.interval;
+        _this.yUnit = _this.meas.unit;
         _this.localTimeOffset = _this.meas.buffer.lastTime - _this.currentTime();
         _this.getRaw();
         return setInterval(_this.getRaw, _this.periodicInterval);
@@ -122,17 +130,43 @@
     };
 
     HomeIOMeasGraph.prototype.renderGraph = function() {
-      var d, i, new_d, new_data, x, y, _i, _len, _ref;
+      var d, extremeX, i, new_d, new_data, old_data, x, y, _i, _j, _len, _len1, _ref;
       new_data = [];
       i = 0;
+      extremeX = 0;
       _ref = this.buffer;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         d = _ref[_i];
         x = ((i - this.buffer.length) * this.interval) / 1000.0;
         y = (parseFloat(d) + this.meas.coefficientOffset) * this.meas.coefficientLinear;
+        if (Math.abs(x) > extremeX) {
+          extremeX = Math.abs(x);
+        }
         new_d = [x, y];
         new_data.push(new_d);
         i += 1;
+      }
+      if (new_data.length > 0) {
+        this.divideX = 1.0;
+        if (extremeX > 24.0 * 60.0 * 60.0) {
+          this.xUnit = "days";
+          this.divideX = 24.0 * 60.0 * 60.0;
+        } else if (extremeX > 60.0 * 60.0) {
+          this.xUnit = "hours";
+          this.divideX = 60.0 * 60.0;
+        } else if (extremeX > 60.0) {
+          this.xUnit = "minutes";
+          this.divideX = 60.0;
+        }
+        if (this.divideX !== 1.0) {
+          old_data = new_data;
+          new_data = [];
+          for (_j = 0, _len1 = old_data.length; _j < _len1; _j++) {
+            d = old_data[_j];
+            new_d = [d[0] / this.divideX, y];
+            new_data.push(new_d);
+          }
+        }
       }
       new_data = {
         data: new_data,
@@ -150,7 +184,10 @@
 
     HomeIOMeasGraph.prototype.afterRender = function() {
       if (this.elementLastTime) {
-        return $(this.elementLastTime).html(this.timeToString(this.lastTime));
+        $(this.elementLastTime).html(this.timeToString(this.lastTime));
+      }
+      if (this.elementUnit) {
+        return $(this.elementUnit).html(this.yUnit + " / " + this.xUnit);
       }
     };
 

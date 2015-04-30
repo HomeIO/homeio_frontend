@@ -16,6 +16,9 @@ class @HomeIOMeasGraph
 
     @showControls = true
 
+    @xUnit = "seconds"
+    @yUnit = ""
+
     @flot_options =
       series:
         lines:
@@ -39,6 +42,7 @@ class @HomeIOMeasGraph
       @elementGraph = "#" + @meas_name + "_graph"
       @elementControls = "#" + @meas_name + "_controls"
       @elementLastTime = "#" + @meas_name + "_lastTime"
+      @elementUnit = "#" + @meas_name + "_Unit"
       
       $("<div\>",
         id: @elementGraph.replace("#","")
@@ -58,6 +62,12 @@ class @HomeIOMeasGraph
         id: @elementLastTime.replace("#","")
         class: "graph-last-time"
       ).appendTo(@elementControls)      
+
+      # x unit
+      $("<div\>",
+        id: @elementUnit.replace("#","")
+        class: "graph-units"
+      ).appendTo(@elementControls)       
       
       
     else
@@ -81,6 +91,8 @@ class @HomeIOMeasGraph
       @interval = @meas.buffer.interval
       @getTo = @meas.buffer.lastTime
       @getFrom = @meas.buffer.lastTime - @maxBufferSize * @interval
+      
+      @yUnit = @meas.unit
       
       # add to localtime to get backend time
       @localTimeOffset = @meas.buffer.lastTime - @currentTime()
@@ -125,14 +137,43 @@ class @HomeIOMeasGraph
   renderGraph: () ->
     new_data = []
     i = 0
-
+    extremeX = 0
+    
     for d in @buffer
       x = ((i - @buffer.length) * @interval) / 1000.0
       y = ( parseFloat(d) + @meas.coefficientOffset ) * @meas.coefficientLinear
       
+      if Math.abs(x) > extremeX
+        extremeX = Math.abs(x)
+      
       new_d = [x, y]
       new_data.push new_d
       i += 1
+
+
+    if new_data.length > 0
+      @divideX = 1.0
+      if extremeX > 24.0*60.0*60.0
+        # days
+        @xUnit = "days"
+        @divideX = 24.0*60.0*60.0
+        
+      else if extremeX > 60.0*60.0
+        # hours
+        @xUnit = "hours"
+        @divideX = 60.0*60.0
+        
+      else if extremeX > 60.0  
+        # minutes
+        @xUnit = "minutes"
+        @divideX = 60.0
+        
+      if @divideX != 1.0
+        old_data = new_data
+        new_data = []
+        for d in old_data
+          new_d = [d[0] / @divideX, y]
+          new_data.push new_d
 
     new_data =
       data: new_data
@@ -151,3 +192,5 @@ class @HomeIOMeasGraph
   afterRender: () ->
     if @elementLastTime
       $(@elementLastTime).html(@timeToString(@lastTime))
+    if @elementUnit
+      $(@elementUnit).html(@yUnit + " / " + @xUnit)
