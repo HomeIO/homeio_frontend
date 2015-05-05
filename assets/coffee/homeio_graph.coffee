@@ -172,7 +172,7 @@ class @HomeIOMeasGraph
         old_data = new_data
         new_data = []
         for d in old_data
-          new_d = [d[0] / @divideX, y]
+          new_d = [d[0] / @divideX, d[1]]
           new_data.push new_d
 
     new_data =

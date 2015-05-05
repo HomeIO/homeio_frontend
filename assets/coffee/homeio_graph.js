@@ -163,7 +163,7 @@
           new_data = [];
           for (_j = 0, _len1 = old_data.length; _j < _len1; _j++) {
             d = old_data[_j];
-            new_d = [d[0] / this.divideX, y];
+            new_d = [d[0] / this.divideX, d[1]];
             new_data.push(new_d);
           }
         }
