@@ -2,8 +2,19 @@ class @HomeIOMeasGraph
   constructor: ->
     # graph is rendered from
     @buffer = []
+    
+    # periodic raw values are fetched every X miliseconds
+    # it can be fixed value - set only @periodicInterval and @periodicDynamicMultiplier to nil
+    # it can be calculated using backend settings - set @periodicDynamicMultiplier 
+    
     # get raw values every miliseconds
     @periodicInterval = 2000
+    # uses backend setting to calculate @periodicInterval
+    # 5 means get new measurements every (about) 5 new measurement fetched
+    @periodicDynamicMultiplier = 20
+    # not allow to set interval lower than this
+    @periodicDynamicMinimum = 1000
+    
     # store max measurements in class buffer
     @maxBufferSize = 100
     
@@ -33,7 +44,7 @@ class @HomeIOMeasGraph
         hoverable: true
   
   prepare: () ->
-    @getMeas()
+    @getInitials()
     @prepareHtml()
 
   prepareHtml: () ->
@@ -74,6 +85,7 @@ class @HomeIOMeasGraph
       @elementGraph = @element
     
 
+
   currentTime: () ->
     (new Date()).getTime()
     
@@ -81,6 +93,25 @@ class @HomeIOMeasGraph
     date = new Date(parseInt(t))
     formattedTime = date.getHours() + ':' + ('0' + date.getMinutes().toString()).slice(-2) + ':' + ('0' + date.getSeconds().toString()).slice(-2)
     formattedTime
+
+  # get backend settings and calculate interval accordingly
+  getInitials: () ->
+    if @periodicDynamicMultiplier
+      $.getJSON "/api/settings.json",  (backendSetting) =>
+        oldInterval = @periodicInterval
+        @periodicInterval = backendSetting.object.meas.cycleInterval * @periodicDynamicMultiplier
+        
+        if @periodicInterval < @periodicDynamicMinimum 
+          @periodicInterval = @periodicDynamicMinimum
+        
+        if @periodicInterval != oldInterval
+          console.log "interval changed from " + oldInterval + " to " + @periodicInterval
+        
+        @getMeas()
+    else
+      @getMeas()
+
+
 
   getMeas: () ->
     $.getJSON "/api/meas/" + @meas_name + "/.json",  (data) =>

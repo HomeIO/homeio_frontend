@@ -117,7 +117,19 @@ func getOverseerShowJson(name string) string {
   return message
 }
 
+func getSettingsJson() string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "settings;\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
 
+func getStatsJson() string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "stats;\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
 
 func main() {
   r := gin.Default()
@@ -213,7 +225,15 @@ func main() {
     c.String(http.StatusOK, getOverseerShowJson(overseerName))
   })
 
+  // settings
+  r.GET("/api/settings.json", func(c *gin.Context) {
+    c.String(http.StatusOK, getSettingsJson())
+  })
 
+  // stats
+  r.GET("/api/stats.json", func(c *gin.Context) {
+    c.String(http.StatusOK, getStatsJson())
+  })
  
   // Listen and serve on 0.0.0.0:8080
   r.Run(":8080")

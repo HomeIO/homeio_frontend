@@ -5,6 +5,7 @@
     var g = new HomeIOMeasGraph;
     g.meas_name = "#{meas.name}";
     g.element = "##{meas.name + "_graph"}";
-    g.periodicInterval = 4000;
+    g.periodicDynamicMultiplier = 20;
+    g.periodicDynamicMinimum = 5000; 
     g.maxBufferSize = 200;
     g.prepare();

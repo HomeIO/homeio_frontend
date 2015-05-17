@@ -10,6 +10,7 @@
   g.element = "#graph";
   g.historyMode = true;
   g.historyLength = 12*3600*1000;
-  g.periodicInterval = 3600000;
+  g.periodicDynamicMultiplier = 50;
+  g.periodicDynamicMinimum = 60000; 
   g.maxBufferSize = 800;
   g.prepare();
