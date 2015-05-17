@@ -79,48 +79,8 @@ app = $.sammy("#main", ->
           
 
       ), 500
-      
-
 
     context.redirect("#/actions/" + @params["name"])
-
-  @post '#/actions/execute1', (context) ->
-    context.app.swap('')
-    @load("/api/actions/" + @params["name"] + "/.json").then (data) ->
-      action = data["object"]
-      context.render("/assets/templates/actions/show.haml",
-        action: action
-      ).appendTo context.$element()
-
-    $.post("/api/actions/" + @params["name"] + "/execute.json",
-      password: md5(@params['password'])
-      name: @params['name']
-    , dataType: "json"
-    ).done (executeData) ->
-      console.log(executeData)
-      console.log(executeData["status"])
-      
-      if executeData.status == 0
-        $(".action-execute-button").hide()
-        console.log(1)
-
-
-                   
-    $.post("/api/actions/" + @params["name"] + "/execute.json",
-      password: md5(@params['password'])
-      name: @params['name']
-    ).done (executeData) ->
-      alert(executeData)
-      
-    
-    #$.ajax
-    #//  type: "POST"
-    #  url: "/api/actions/" + @params["name"] + "/execute.json"
-    #  data: 
-    #    password: md5(@params['password'])
-    #    name: @params['name']
-
-
 
 
 
@@ -140,6 +100,13 @@ app = $.sammy("#main", ->
         overseer: overseer
       ).appendTo context.$element()
 
+  @get "#/stats", (context) ->
+    context.app.swap('')
+    @load("/api/stats.json").then (data) ->
+      stats = data["object"]
+      context.render("/assets/templates/stats/show.haml",
+        stats: stats
+      ).appendTo context.$element()
 
 
 )

@@ -1,0 +1,28 @@
+.header
+  %h2
+    Stats
+
+.content
+  %table.pure-table.pure-table-bordered
+    %thead
+      %tr
+        %th Name
+        %th Value
+
+    %tbody
+      %tr
+        %td Uptime
+        %td
+          = stats.time.uptime / 1000
+          s
+      %tr
+        %td vmUsage
+        %td
+          = stats.resources.vmUsage
+      %tr
+        %td residentSet
+        %td
+          = stats.resources.residentSet
+          
+          
+          

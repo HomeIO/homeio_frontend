@@ -111,35 +111,6 @@
       });
       return context.redirect("#/actions/" + this.params["name"]);
     });
-    this.post('#/actions/execute1', function(context) {
-      context.app.swap('');
-      this.load("/api/actions/" + this.params["name"] + "/.json").then(function(data) {
-        var action;
-        action = data["object"];
-        return context.render("/assets/templates/actions/show.haml", {
-          action: action
-        }).appendTo(context.$element());
-      });
-      $.post("/api/actions/" + this.params["name"] + "/execute.json", {
-        password: md5(this.params['password']),
-        name: this.params['name']
-      }, {
-        dataType: "json"
-      }).done(function(executeData) {
-        console.log(executeData);
-        console.log(executeData["status"]);
-        if (executeData.status === 0) {
-          $(".action-execute-button").hide();
-          return console.log(1);
-        }
-      });
-      return $.post("/api/actions/" + this.params["name"] + "/execute.json", {
-        password: md5(this.params['password']),
-        name: this.params['name']
-      }).done(function(executeData) {
-        return alert(executeData);
-      });
-    });
     this.get("#/overseers", function(context) {
       return this.load("/api/overseers.json").then(function(data) {
         return context.partial("/assets/templates/overseers/index.haml", function(html) {
@@ -159,13 +130,23 @@
         });
       });
     });
-    return this.get("#/overseers/:overseerName", function(context) {
+    this.get("#/overseers/:overseerName", function(context) {
       context.app.swap('');
       return this.load("/api/overseers/" + this.params["overseerName"] + "/.json").then(function(data) {
         var overseer;
         overseer = data["object"];
         return context.render("/assets/templates/overseers/show.haml", {
           overseer: overseer
+        }).appendTo(context.$element());
+      });
+    });
+    return this.get("#/stats", function(context) {
+      context.app.swap('');
+      return this.load("/api/stats.json").then(function(data) {
+        var stats;
+        stats = data["object"];
+        return context.render("/assets/templates/stats/show.haml", {
+          stats: stats
         }).appendTo(context.$element());
       });
     });
