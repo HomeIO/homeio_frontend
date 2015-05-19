@@ -36,6 +36,10 @@
         });
       });
     });
+    this.get("#/measurements/graph", function(context) {
+      context.app.swap('');
+      return context.render("/assets/templates/meas/graph_multi.haml").appendTo(context.$element());
+    });
     this.get("#/measurements/:measName", function(context) {
       context.app.swap('');
       return this.load("/api/meas/" + this.params["measName"] + "/.json").then(function(data) {
