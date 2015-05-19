@@ -4,36 +4,74 @@
 
   this.HomeIOMeasGraphMulti = (function() {
     function HomeIOMeasGraphMulti() {
+      this.fetchRawData = bind(this.fetchRawData, this);
+      this.renderGraph = bind(this.renderGraph, this);
       this.renderMeasCheckboxes = bind(this.renderMeasCheckboxes, this);
       this.container = null;
+      this.meases = [];
+      this.measesHash = {};
+      this.settings = {};
       this.enabled = {};
+      this.buffer = {};
+      this.lastTime = {};
       this.timeFrom = null;
       this.timeTo = null;
+      this.timeRange = 60 * 1000;
+      this.periodicInterval = 4000;
+      this.serverTimeOffset = 0;
+      this.flotOptions = {
+        series: {
+          lines: {
+            show: true,
+            fill: true
+          },
+          points: {
+            show: false
+          }
+        },
+        legend: {
+          show: true
+        },
+        grid: {
+          clickable: false,
+          hoverable: true
+        }
+      };
     }
 
     HomeIOMeasGraphMulti.prototype.start = function() {
       return this.getFromApi();
     };
 
+    HomeIOMeasGraphMulti.prototype.currentTime = function() {
+      return (new Date()).getTime();
+    };
+
     HomeIOMeasGraphMulti.prototype.getFromApi = function() {
-      $.getJSON("/api/settings.json", (function(_this) {
+      return $.getJSON("/api/settings.json", (function(_this) {
         return function(data) {
           _this.settings = data;
-          return _this.renderIfPossible();
-        };
-      })(this));
-      return $.getJSON("/api/meas.json", (function(_this) {
-        return function(data) {
-          _this.meases = data.array;
-          return _this.renderIfPossible();
+          return $.getJSON("/api/meas.json", function(data) {
+            var j, len, meas, ref;
+            _this.meases = data.array;
+            if (_this.meases.length > 0) {
+              _this.serverTimeOffset = _this.meases[0].buffer.lastTime - _this.currentTime();
+            }
+            ref = _this.meases;
+            for (j = 0, len = ref.length; j < len; j++) {
+              meas = ref[j];
+              _this.measesHash[meas.name] = meas;
+            }
+            return _this.render();
+          });
         };
       })(this));
     };
 
-    HomeIOMeasGraphMulti.prototype.renderIfPossible = function() {
-      if (this.meases && this.settings) {
-        return this.renderControls();
-      }
+    HomeIOMeasGraphMulti.prototype.render = function() {
+      this.renderControls();
+      this.renderGraph();
+      return setInterval(this.renderGraph, this.periodicInterval);
     };
 
     HomeIOMeasGraphMulti.prototype.renderControls = function() {
@@ -41,15 +79,15 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderMeasCheckboxes = function() {
-      var checkboxId, div, i, len, meas, ref;
+      var checkboxId, div, j, len, meas, ref;
       this.containerCheckbox = this.container + "_checkboxes";
       $("<div\>", {
         id: this.containerCheckbox.replace("#", ""),
         "class": "multi-graph-checkbox-container"
       }).appendTo($(this.container));
       ref = this.meases;
-      for (i = 0, len = ref.length; i < len; i++) {
-        meas = ref[i];
+      for (j = 0, len = ref.length; j < len; j++) {
+        meas = ref[j];
         checkboxId = this.containerCheckbox.replace("#", "") + "_" + meas.name;
         div = $("<div\>", {
           "class": "multi-graph-checkbox-element"
@@ -79,26 +117,69 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderGraph = function() {
-      return this.getData();
+      return this.fetchRawData();
     };
 
-    HomeIOMeasGraphMulti.prototype.isMeasEnabled = function(meas) {
-      return this.enabled[meas] === true;
-    };
-
-    HomeIOMeasGraphMulti.prototype.getData = function() {
-      var i, len, meas, ref, results;
+    HomeIOMeasGraphMulti.prototype.fetchRawData = function() {
+      var graphData, j, k, len, len1, measName, ref, ref1, timeFrom, timeTo, url;
+      this.timeTo = this.currentTime();
       ref = Object.keys(this.enabled);
-      results = [];
-      for (i = 0, len = ref.length; i < len; i++) {
-        meas = ref[i];
-        if (typeof this.isMeasEnabled === "function" ? this.isMeasEnabled(meas) : void 0) {
-          results.push(console.log(meas));
-        } else {
-          results.push(void 0);
+      for (j = 0, len = ref.length; j < len; j++) {
+        measName = ref[j];
+        if (this.enabled[measName]) {
+          console.log(measName);
+          timeFrom = this.timeTo - this.timeRange;
+          if (this.lastTime[measName]) {
+            timeFrom = this.lastTime[measName];
+          }
+          timeFrom += this.serverTimeOffset;
+          timeTo = this.timeTo + this.serverTimeOffset;
+          url = "/api/meas/" + measName + "/raw_for_time/" + timeFrom + "/" + timeTo + "/.json";
+          $.getJSON(url, (function(_this) {
+            return function(response) {
+              var d, i, k, len1, length, processedData, ref1, x, y;
+              measName = response.meas_type;
+              processedData = [];
+              length = response.data.length;
+              i = 0;
+              console.log(length);
+              ref1 = response.data;
+              for (k = 0, len1 = ref1.length; k < len1; k++) {
+                d = ref1[k];
+                x = (response.lastTime - ((length - i) * response.interval)) / 1000.0;
+                y = (parseFloat(d) + _this.measesHash[measName].coefficientOffset) * _this.measesHash[measName].coefficientLinear;
+                i += 1;
+                processedData.push([x, y]);
+              }
+              if (_this.buffer[measName]) {
+                _this.buffer[measName] += processedData;
+              } else {
+                _this.buffer[measName] = processedData;
+              }
+              return _this.buffer[measName] = processedData;
+            };
+          })(this));
         }
       }
-      return results;
+      graphData = [];
+      ref1 = Object.keys(this.buffer);
+      for (k = 0, len1 = ref1.length; k < len1; k++) {
+        measName = ref1[k];
+        if (this.enabled[measName]) {
+          graphData.push({
+            "label": measName,
+            "data": this.buffer[measName]
+          });
+        }
+      }
+      this.containerGraph = this.container + "_graph";
+      $("<div\>", {
+        id: this.containerGraph.replace("#", ""),
+        "class": "multi-graph-graph-container"
+      }).appendTo($(this.container));
+      $(this.containerGraph).height(500);
+      $(this.containerGraph).width(500);
+      return this.plot = $.plot($(this.containerGraph), graphData, this.flotOptions);
     };
 
     return HomeIOMeasGraphMulti;
