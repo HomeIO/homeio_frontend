@@ -78,8 +78,10 @@ class @HomeIOMeasGraphMulti
       
         # mark client-server time offset
         if @meases.length > 0
+          # lower than 0 means time of last measurement from backend is lower than client current time
           @serverTimeOffset = @meases[0].buffer.lastTime - @currentTime()
-        
+
+        # prepare buffers and stuff
         for meas in @meases
           @measesHash[meas.name] = meas
           @buffer[meas.name] = []
@@ -134,7 +136,7 @@ class @HomeIOMeasGraphMulti
       
   renderGraph: () =>
     @recalculateTimeRanges()
-    @removeOldData()
+    @normalizeDataForTime()
     @fetchRawData()
   
   # set time ranges for current graph
@@ -143,15 +145,17 @@ class @HomeIOMeasGraphMulti
     @timeFrom = @timeTo - @timeRange
   
   # remove data older than @timeFrom
-  removeOldData: () ->
-    timeFrom = @timeFrom - @serverTimeOffset
+  normalizeDataForTime: () ->
+    timeFrom = @timeFrom + @serverTimeOffset
+    timeTo = @timeTo + @serverTimeOffset
+ 
     for meas in @meases
       oldBuffer = @buffer[meas.name]
       newBuffer = []
       
       # only use data in time range
       for d in oldBuffer
-        if (d[0] >= @timeFrom) && (d[0] <= @timeTo)
+        if (d[0] >= timeFrom) && (d[0] <= timeTo)
           newBuffer.push d
       
       # must be sorted to eliminate quirks
@@ -161,7 +165,10 @@ class @HomeIOMeasGraphMulti
       
       @buffer[meas.name] = newBuffer
 
-
+      # mark last time
+      if newBuffer.length > 0
+        @lastTime[meas.name] = newBuffer[newBuffer.length - 1][0]
+        
   # fetch all needed data to render fresh graph  
   fetchRawData: () =>
     # fetch all enabled measurement raw data
@@ -170,8 +177,10 @@ class @HomeIOMeasGraphMulti
         
         # calculate timeFrom, add offset
         timeFrom = @timeTo - @timeRange
+        console.log @lastTime
         if @lastTime[measName]
           timeFrom = @lastTime[measName]
+        
         timeFrom += @serverTimeOffset
         timeTo = @timeTo + @serverTimeOffset
         

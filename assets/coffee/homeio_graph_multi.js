@@ -123,7 +123,7 @@
 
     HomeIOMeasGraphMulti.prototype.renderGraph = function() {
       this.recalculateTimeRanges();
-      this.removeOldData();
+      this.normalizeDataForTime();
       return this.fetchRawData();
     };
 
@@ -132,9 +132,10 @@
       return this.timeFrom = this.timeTo - this.timeRange;
     };
 
-    HomeIOMeasGraphMulti.prototype.removeOldData = function() {
-      var d, j, k, len, len1, meas, newBuffer, oldBuffer, ref, results, timeFrom;
-      timeFrom = this.timeFrom - this.serverTimeOffset;
+    HomeIOMeasGraphMulti.prototype.normalizeDataForTime = function() {
+      var d, j, k, len, len1, meas, newBuffer, oldBuffer, ref, results, timeFrom, timeTo;
+      timeFrom = this.timeFrom + this.serverTimeOffset;
+      timeTo = this.timeTo + this.serverTimeOffset;
       ref = this.meases;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
@@ -143,14 +144,19 @@
         newBuffer = [];
         for (k = 0, len1 = oldBuffer.length; k < len1; k++) {
           d = oldBuffer[k];
-          if ((d[0] >= this.timeFrom) && (d[0] <= this.timeTo)) {
+          if ((d[0] >= timeFrom) && (d[0] <= timeTo)) {
             newBuffer.push(d);
           }
         }
         newBuffer = newBuffer.sort(function(a, b) {
           return a[0] - b[0];
         });
-        results.push(this.buffer[meas.name] = newBuffer);
+        this.buffer[meas.name] = newBuffer;
+        if (newBuffer.length > 0) {
+          results.push(this.lastTime[meas.name] = newBuffer[newBuffer.length - 1][0]);
+        } else {
+          results.push(void 0);
+        }
       }
       return results;
     };
@@ -162,6 +168,7 @@
         measName = ref[j];
         if (this.enabled[measName]) {
           timeFrom = this.timeTo - this.timeRange;
+          console.log(this.lastTime);
           if (this.lastTime[measName]) {
             timeFrom = this.lastTime[measName];
           }
