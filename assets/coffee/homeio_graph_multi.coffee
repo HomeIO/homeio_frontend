@@ -35,7 +35,7 @@ class @HomeIOMeasGraphMulti
     @timeFrom = null
     @timeTo = null
     # amount of seconds represented in graph
-    @timeRange = 60 * 1000
+    @timeRange = 120 * 1000
     
     # refresh every miliseconds
     @periodicInterval = 4000
@@ -56,6 +56,8 @@ class @HomeIOMeasGraphMulti
       grid:
         clickable: false
         hoverable: true
+      xaxis: 
+        mode: "time"    
      
     
   # run everything
@@ -80,6 +82,7 @@ class @HomeIOMeasGraphMulti
         
         for meas in @meases
           @measesHash[meas.name] = meas
+          @buffer[meas.name] = []
       
         @render()
   
@@ -130,15 +133,40 @@ class @HomeIOMeasGraphMulti
       @renderGraph()
       
   renderGraph: () =>
+    @recalculateTimeRanges()
+    @removeOldData()
     @fetchRawData()
   
-  fetchRawData: () =>
+  # set time ranges for current graph
+  recalculateTimeRanges: () =>
     @timeTo = @currentTime()
-    
+    @timeFrom = @timeTo - @timeRange
+  
+  # remove data older than @timeFrom
+  removeOldData: () ->
+    timeFrom = @timeFrom - @serverTimeOffset
+    for meas in @meases
+      oldBuffer = @buffer[meas.name]
+      newBuffer = []
+      
+      # only use data in time range
+      for d in oldBuffer
+        if (d[0] >= @timeFrom) && (d[0] <= @timeTo)
+          newBuffer.push d
+      
+      # must be sorted to eliminate quirks
+      newBuffer = newBuffer.sort((a, b) ->
+        a[0] - b[0]
+      )
+      
+      @buffer[meas.name] = newBuffer
+
+
+  # fetch all needed data to render fresh graph  
+  fetchRawData: () =>
     # fetch all enabled measurement raw data
     for measName in Object.keys(@enabled)
       if @enabled[measName]
-        console.log measName
         
         # calculate timeFrom, add offset
         timeFrom = @timeTo - @timeRange
@@ -150,33 +178,23 @@ class @HomeIOMeasGraphMulti
         url = "/api/meas/" + measName + "/raw_for_time/" + timeFrom + "/" + timeTo + "/.json"
         $.getJSON url, (response) =>
           measName = response.meas_type
-          processedData = []
           length = response.data.length
           i = 0
       
-          console.log length
-      
           for d in response.data
-            x = (response.lastTime - ((length - i) * response.interval)) / 1000.0
+            x = (response.lastTime - ((length - i) * response.interval))
             y = ( parseFloat(d) + @measesHash[measName].coefficientOffset ) * @measesHash[measName].coefficientLinear
             
             i += 1
-            processedData.push [x, y]
+            @buffer[measName].push [x, y]
           
-          if @buffer[measName]
-            @buffer[measName] += processedData
-          else
-            @buffer[measName] = processedData
-
-          @buffer[measName] = processedData
-          
-          # TODO: filter timeFrom range 
           
     graphData = []
     for measName in Object.keys(@buffer)
       if @enabled[measName]
         graphData.push {"label": measName, "data": @buffer[measName]}
     
+    #console.log @buffer
     @containerGraph = @container + "_graph"
     
     $("<div\>",
@@ -185,7 +203,12 @@ class @HomeIOMeasGraphMulti
     ).appendTo($(@container))
 
     
-    $(@containerGraph).height(500)
-    $(@containerGraph).width(500)
+    $(@containerGraph).height(900)
+    $(@containerGraph).width(900)
     
-    @plot = $.plot $(@containerGraph), graphData, @flotOptions   
+    if @plot
+      @plot.setData(graphData)
+      @plot.setupGrid();
+      @plot.draw()
+    else  
+      @plot = $.plot $(@containerGraph), graphData , @flotOptions   

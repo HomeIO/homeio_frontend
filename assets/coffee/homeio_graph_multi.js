@@ -5,6 +5,7 @@
   this.HomeIOMeasGraphMulti = (function() {
     function HomeIOMeasGraphMulti() {
       this.fetchRawData = bind(this.fetchRawData, this);
+      this.recalculateTimeRanges = bind(this.recalculateTimeRanges, this);
       this.renderGraph = bind(this.renderGraph, this);
       this.renderMeasCheckboxes = bind(this.renderMeasCheckboxes, this);
       this.container = null;
@@ -16,7 +17,7 @@
       this.lastTime = {};
       this.timeFrom = null;
       this.timeTo = null;
-      this.timeRange = 60 * 1000;
+      this.timeRange = 120 * 1000;
       this.periodicInterval = 4000;
       this.serverTimeOffset = 0;
       this.flotOptions = {
@@ -35,6 +36,9 @@
         grid: {
           clickable: false,
           hoverable: true
+        },
+        xaxis: {
+          mode: "time"
         }
       };
     }
@@ -61,6 +65,7 @@
             for (j = 0, len = ref.length; j < len; j++) {
               meas = ref[j];
               _this.measesHash[meas.name] = meas;
+              _this.buffer[meas.name] = [];
             }
             return _this.render();
           });
@@ -117,17 +122,45 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderGraph = function() {
+      this.recalculateTimeRanges();
+      this.removeOldData();
       return this.fetchRawData();
+    };
+
+    HomeIOMeasGraphMulti.prototype.recalculateTimeRanges = function() {
+      this.timeTo = this.currentTime();
+      return this.timeFrom = this.timeTo - this.timeRange;
+    };
+
+    HomeIOMeasGraphMulti.prototype.removeOldData = function() {
+      var d, j, k, len, len1, meas, newBuffer, oldBuffer, ref, results, timeFrom;
+      timeFrom = this.timeFrom - this.serverTimeOffset;
+      ref = this.meases;
+      results = [];
+      for (j = 0, len = ref.length; j < len; j++) {
+        meas = ref[j];
+        oldBuffer = this.buffer[meas.name];
+        newBuffer = [];
+        for (k = 0, len1 = oldBuffer.length; k < len1; k++) {
+          d = oldBuffer[k];
+          if ((d[0] >= this.timeFrom) && (d[0] <= this.timeTo)) {
+            newBuffer.push(d);
+          }
+        }
+        newBuffer = newBuffer.sort(function(a, b) {
+          return a[0] - b[0];
+        });
+        results.push(this.buffer[meas.name] = newBuffer);
+      }
+      return results;
     };
 
     HomeIOMeasGraphMulti.prototype.fetchRawData = function() {
       var graphData, j, k, len, len1, measName, ref, ref1, timeFrom, timeTo, url;
-      this.timeTo = this.currentTime();
       ref = Object.keys(this.enabled);
       for (j = 0, len = ref.length; j < len; j++) {
         measName = ref[j];
         if (this.enabled[measName]) {
-          console.log(measName);
           timeFrom = this.timeTo - this.timeRange;
           if (this.lastTime[measName]) {
             timeFrom = this.lastTime[measName];
@@ -137,26 +170,20 @@
           url = "/api/meas/" + measName + "/raw_for_time/" + timeFrom + "/" + timeTo + "/.json";
           $.getJSON(url, (function(_this) {
             return function(response) {
-              var d, i, k, len1, length, processedData, ref1, x, y;
+              var d, i, k, len1, length, ref1, results, x, y;
               measName = response.meas_type;
-              processedData = [];
               length = response.data.length;
               i = 0;
-              console.log(length);
               ref1 = response.data;
+              results = [];
               for (k = 0, len1 = ref1.length; k < len1; k++) {
                 d = ref1[k];
-                x = (response.lastTime - ((length - i) * response.interval)) / 1000.0;
+                x = response.lastTime - ((length - i) * response.interval);
                 y = (parseFloat(d) + _this.measesHash[measName].coefficientOffset) * _this.measesHash[measName].coefficientLinear;
                 i += 1;
-                processedData.push([x, y]);
+                results.push(_this.buffer[measName].push([x, y]));
               }
-              if (_this.buffer[measName]) {
-                _this.buffer[measName] += processedData;
-              } else {
-                _this.buffer[measName] = processedData;
-              }
-              return _this.buffer[measName] = processedData;
+              return results;
             };
           })(this));
         }
@@ -177,9 +204,15 @@
         id: this.containerGraph.replace("#", ""),
         "class": "multi-graph-graph-container"
       }).appendTo($(this.container));
-      $(this.containerGraph).height(500);
-      $(this.containerGraph).width(500);
-      return this.plot = $.plot($(this.containerGraph), graphData, this.flotOptions);
+      $(this.containerGraph).height(900);
+      $(this.containerGraph).width(900);
+      if (this.plot) {
+        this.plot.setData(graphData);
+        this.plot.setupGrid();
+        return this.plot.draw();
+      } else {
+        return this.plot = $.plot($(this.containerGraph), graphData, this.flotOptions);
+      }
     };
 
     return HomeIOMeasGraphMulti;

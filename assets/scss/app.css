@@ -55,3 +55,6 @@
 .button-secondary {
   background: #42b8dd;
   /* this is a light blue */ }
+
+.multi-graph-graph-container {
+  font-size: 10px; }
