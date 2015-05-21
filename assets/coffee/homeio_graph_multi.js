@@ -224,7 +224,7 @@
                 response.earliestTime = response.lastTime - response.count * response.interval;
               }
               if (response.earliestTime > _this.historyEarliestTime) {
-                _this.historyEarliestTime = earliestTime;
+                _this.historyEarliestTime = response.earliestTime;
               }
               ref1 = response.data;
               for (k = 0, len1 = ref1.length; k < len1; k++) {

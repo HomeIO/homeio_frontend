@@ -279,7 +279,7 @@ class @HomeIOMeasGraphMulti
             response.earliestTime = response.lastTime - response.count * response.interval
           # update earliest time
           if response.earliestTime > @historyEarliestTime
-            @historyEarliestTime = earliestTime
+            @historyEarliestTime = response.earliestTime
       
           for d in response.data
             # convert raw values to [time,value]
