@@ -157,7 +157,40 @@
   });
 
   $(function() {
-    return app.run("#/");
+    app.run("#/");
+    $(window).resize((function(_this) {
+      return function(event) {
+        if ($.data(_this, "resizeBlock") !== true) {
+          $.data(_this, "resizeBlock", true);
+          clearTimeout($.data(_this, "resizeTimer"));
+          return $.data(_this, "resizeTimer", setTimeout(function() {
+            var element, h, ih, innerObj, oh, paddingTop;
+            h = event.currentTarget.innerHeight;
+            $('body').height(h);
+            $('#layout').height(h);
+            $('.content').height(h);
+            innerObj = $(".content-inner");
+            if (innerObj) {
+              element = innerObj.get(0);
+              paddingTop = 60;
+              oh = element.offsetTop - element.scrollTop + element.clientTop + paddingTop;
+              console.log(oh, element.offsetTop, element.scrollTop, element.clientTop);
+              ih = h - oh;
+              if (h > 200) {
+                $('.content-inner').height(ih);
+              }
+            }
+            $('.resizable').trigger('resize');
+            return $.data(_this, "resizeBlock", false);
+          }, 500));
+        }
+      };
+    })(this));
+    return setTimeout((function(_this) {
+      return function() {
+        return $(window).trigger('resize');
+      };
+    })(this), 200);
   });
 
 }).call(this);

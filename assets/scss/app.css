@@ -56,5 +56,19 @@
   background: #42b8dd;
   /* this is a light blue */ }
 
-.multi-graph-graph-container {
-  font-size: 10px; }
+.multi-graph-container {
+  height: 100%;
+  width: 100%; }
+  .multi-graph-container .multi-graph-graph-container {
+    font-size: 10px;
+    min-width: 300px;
+    min-height: 300px;
+    height: 100%;
+    width: 100%; }
+  .multi-graph-container .multi-graph-checkbox-container .multi-graph-checkbox-element {
+    border-radius: 5px;
+    background: #1f8dd6;
+    color: #fff;
+    display: inline-block;
+    margin: 5px;
+    padding: 4px; }

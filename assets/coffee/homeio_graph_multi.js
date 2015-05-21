@@ -4,10 +4,11 @@
 
   this.HomeIOMeasGraphMulti = (function() {
     function HomeIOMeasGraphMulti() {
+      this.plotGraph = bind(this.plotGraph, this);
       this.fetchRawData = bind(this.fetchRawData, this);
       this.recalculateTimeRanges = bind(this.recalculateTimeRanges, this);
       this.renderGraph = bind(this.renderGraph, this);
-      this.renderMeasCheckboxes = bind(this.renderMeasCheckboxes, this);
+      this.renderControls = bind(this.renderControls, this);
       this.container = null;
       this.meases = [];
       this.measesHash = {};
@@ -19,6 +20,9 @@
       this.timeTo = null;
       this.timeRange = 120 * 1000;
       this.periodicInterval = 4000;
+      this.periodicDynamic = false;
+      this.periodicDynamicMultiplier = 5;
+      this.periodicDynamicMinimum = 2000;
       this.serverTimeOffset = 0;
       this.flotOptions = {
         series: {
@@ -38,7 +42,8 @@
           hoverable: true
         },
         xaxis: {
-          mode: "time"
+          mode: "time",
+          timezone: "browser"
         }
       };
     }
@@ -80,12 +85,14 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderControls = function() {
-      return this.renderMeasCheckboxes();
-    };
-
-    HomeIOMeasGraphMulti.prototype.renderMeasCheckboxes = function() {
       var checkboxId, div, j, len, meas, ref;
       this.containerCheckbox = this.container + "_checkboxes";
+      this.containerGraph = this.container + "_graph";
+      $(this.container).addClass("multi-graph-container");
+      $("<div\>", {
+        id: this.containerGraph.replace("#", ""),
+        "class": "multi-graph-graph-container resizable"
+      }).appendTo($(this.container));
       $("<div\>", {
         id: this.containerCheckbox.replace("#", ""),
         "class": "multi-graph-checkbox-container"
@@ -110,13 +117,23 @@
         }).appendTo(div);
         div.appendTo($(this.containerCheckbox));
       }
-      return $(".multi-graph-checkbox").change((function(_this) {
+      $(".multi-graph-checkbox").change((function(_this) {
         return function(event) {
           var name, obj;
           obj = $(event.currentTarget);
           name = obj.data("meas-name");
           _this.enabled[name] = obj.is(':checked');
+          if (_this.enabled[name] !== true) {
+            _this.buffer[name] = [];
+            _this.lastTime[name] = null;
+          }
           return _this.renderGraph();
+        };
+      })(this));
+      return $(this.containerGraph).resize((function(_this) {
+        return function(event) {
+          _this.plot = null;
+          return _this.plotGraph();
         };
       })(this));
     };
@@ -162,7 +179,7 @@
     };
 
     HomeIOMeasGraphMulti.prototype.fetchRawData = function() {
-      var graphData, j, k, len, len1, measName, ref, ref1, timeFrom, timeTo, url;
+      var j, len, measName, ref, timeFrom, timeTo, url;
       ref = Object.keys(this.enabled);
       for (j = 0, len = ref.length; j < len; j++) {
         measName = ref[j];
@@ -195,10 +212,15 @@
           })(this));
         }
       }
+      return this.plotGraph();
+    };
+
+    HomeIOMeasGraphMulti.prototype.plotGraph = function() {
+      var graphData, j, len, measName, ref;
       graphData = [];
-      ref1 = Object.keys(this.buffer);
-      for (k = 0, len1 = ref1.length; k < len1; k++) {
-        measName = ref1[k];
+      ref = Object.keys(this.buffer);
+      for (j = 0, len = ref.length; j < len; j++) {
+        measName = ref[j];
         if (this.enabled[measName]) {
           graphData.push({
             "label": measName,
@@ -206,13 +228,6 @@
           });
         }
       }
-      this.containerGraph = this.container + "_graph";
-      $("<div\>", {
-        id: this.containerGraph.replace("#", ""),
-        "class": "multi-graph-graph-container"
-      }).appendTo($(this.container));
-      $(this.containerGraph).height(900);
-      $(this.containerGraph).width(900);
       if (this.plot) {
         this.plot.setData(graphData);
         this.plot.setupGrid();

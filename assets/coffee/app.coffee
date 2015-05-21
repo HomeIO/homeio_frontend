@@ -116,3 +116,42 @@ app = $.sammy("#main", ->
 )
 $ ->
   app.run "#/"
+  
+  # TODO make is usable on all pages
+  # TODO not executed after changing url, without F5
+  
+  # custom  snippet to make multi-graph big
+  $(window).resize (event) =>
+    if $.data(this, "resizeBlock") != true
+      $.data(this, "resizeBlock", true)
+    
+      clearTimeout $.data(this, "resizeTimer")
+      $.data this, "resizeTimer", setTimeout(=>
+
+        h = event.currentTarget.innerHeight
+        $('body').height(h)
+        $('#layout').height(h)
+        $('.content').height(h)
+
+        innerObj = $(".content-inner")
+        if innerObj
+          element = innerObj.get(0)
+          paddingTop = 60 # yeah :>
+          oh = element.offsetTop - element.scrollTop + element.clientTop + paddingTop
+          console.log oh, element.offsetTop, element.scrollTop, element.clientTop
+          ih = h - oh
+
+          if h > 200
+            $('.content-inner').height(ih)
+
+        $('.resizable').trigger('resize')
+        $.data(this, "resizeBlock", false)
+      
+      , 500)
+   
+   setTimeout(=>
+    $(window).trigger('resize')   
+   , 200) 
+
+
+    

@@ -1,5 +1,6 @@
 body {
     color: #777;
+    height: 100%;
 }
 
 .pure-img-responsive {
@@ -41,7 +42,8 @@ The content `<div>` is where all your content goes.
 .content {
     margin: 0 auto;
     padding: 0 2em;
-    max-width: 800px;
+    max-width: 95%;
+    min-height: 95%;
     margin-bottom: 50px;
     line-height: 1.6em;
 }

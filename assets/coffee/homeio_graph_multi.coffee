@@ -37,8 +37,12 @@ class @HomeIOMeasGraphMulti
     # amount of seconds represented in graph
     @timeRange = 120 * 1000
     
-    # refresh every miliseconds
+    # refresh every miliseconds, default value
     @periodicInterval = 4000
+    # TODO
+    @periodicDynamic = false
+    @periodicDynamicMultiplier = 5
+    @periodicDynamicMinimum = 2000
     
     # offset between server and client in miliseconds
     @serverTimeOffset = 0
@@ -57,7 +61,8 @@ class @HomeIOMeasGraphMulti
         clickable: false
         hoverable: true
       xaxis: 
-        mode: "time"    
+        mode: "time"  
+        timezone: "browser"
      
     
   # run everything
@@ -94,12 +99,19 @@ class @HomeIOMeasGraphMulti
     @renderGraph()
     setInterval @renderGraph, @periodicInterval
   
-  renderControls: () ->
-    @renderMeasCheckboxes()
-  
   # meas checkboxes are used to choose what measurements should be displayed
-  renderMeasCheckboxes: () =>
+  # it renders also graph container
+  renderControls: () =>
     @containerCheckbox = @container + "_checkboxes"
+    @containerGraph = @container + "_graph"
+    
+    $(@container).addClass("multi-graph-container")
+    
+    $("<div\>",
+      id: @containerGraph.replace("#","")
+      class: "multi-graph-graph-container resizable"
+    ).appendTo($(@container))
+    
     $("<div\>",
       id: @containerCheckbox.replace("#","")
       class: "multi-graph-checkbox-container"
@@ -132,7 +144,19 @@ class @HomeIOMeasGraphMulti
       name = obj.data("meas-name")
       @enabled[name] = obj.is(':checked')
       
+      # when user disable meas type from graph
+      # clean buffer to maintain data when
+      # enabling it in future
+      if @enabled[name] != true
+        @buffer[name] = []
+        @lastTime[name] = null
+      
       @renderGraph()
+      
+    $(@containerGraph).resize (event) =>
+      #
+      @plot = null
+      @plotGraph()
       
   renderGraph: () =>
     @recalculateTimeRanges()
@@ -181,6 +205,8 @@ class @HomeIOMeasGraphMulti
         if @lastTime[measName]
           timeFrom = @lastTime[measName]
         
+        # TODO add condition to
+        
         timeFrom += @serverTimeOffset
         timeTo = @timeTo + @serverTimeOffset
         
@@ -197,23 +223,13 @@ class @HomeIOMeasGraphMulti
             i += 1
             @buffer[measName].push [x, y]
           
-          
+    @plotGraph()
+    
+  plotGraph: () =>  
     graphData = []
     for measName in Object.keys(@buffer)
       if @enabled[measName]
         graphData.push {"label": measName, "data": @buffer[measName]}
-    
-    #console.log @buffer
-    @containerGraph = @container + "_graph"
-    
-    $("<div\>",
-      id: @containerGraph.replace("#","")
-      class: "multi-graph-graph-container"
-    ).appendTo($(@container))
-
-    
-    $(@containerGraph).height(900)
-    $(@containerGraph).width(900)
     
     if @plot
       @plot.setData(graphData)
