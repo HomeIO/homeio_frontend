@@ -36,9 +36,17 @@
         });
       });
     });
-    this.get("#/measurements/graph", function(context) {
+    this.get("#/multigraph/current", function(context) {
       context.app.swap('');
-      return context.render("/assets/templates/meas/graph_multi.haml").appendTo(context.$element());
+      return context.render("/assets/templates/multigraph/current.haml").appendTo(context.$element());
+    });
+    this.get("#/multigraph/history/full_range", function(context) {
+      context.app.swap('');
+      return context.render("/assets/templates/multigraph/full_range.haml").appendTo(context.$element());
+    });
+    this.get("#/multigraph/history/day", function(context) {
+      context.app.swap('');
+      return context.render("/assets/templates/multigraph/history_day.haml").appendTo(context.$element());
     });
     this.get("#/measurements/:measName", function(context) {
       context.app.swap('');

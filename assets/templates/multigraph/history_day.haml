@@ -1,0 +1,14 @@
+.header
+  %h2
+    Multigraph - current
+
+.content-inner
+  #measGraphMulti
+
+  
+:javascript
+  var g = new HomeIOMeasGraphMulti;
+  g.container = "#measGraphMulti";
+  g.mode = 'history';
+  g.historyUseFullRange = true;
+  g.start()  

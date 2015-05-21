@@ -16,6 +16,11 @@ class @HomeIOMeasGraphMulti
     # where everything from graph is located
     @container = null
     
+    # modes:
+    # normal - all measurements every interval
+    # history - long amount of time, get only X measurements
+    @mode = 'normal'
+    
     # fetched meases
     @meases = []
     # in hash format
@@ -37,7 +42,7 @@ class @HomeIOMeasGraphMulti
     @timeFrom = null
     @timeTo = null
     # amount of seconds represented in graph
-    @timeRange = 60 * 1000
+    @timeRange = 120 * 1000
     
     # refresh every miliseconds, default value
     @periodicInterval = 4000
@@ -47,6 +52,17 @@ class @HomeIOMeasGraphMulti
     @periodicDynamicMultiplier = 5
     @periodicDynamicMinimum = 2000
     @periodicDynamicMaximum = 10000
+    
+    # max amount of measurements fetched when using history mode
+    @historyMaxBufferSize = 800
+    # if true try use whole time range
+    @historyUseFullRange = true
+    # if above is set to true, timeFrom will be always stored in variable below
+    @historyEarliestTime = 0
+    # default time range for history mode
+    @historyTimeRange = 12 * 3600 * 1000
+    # default interval for refreshing history mode
+    @historyInterval = 3600 * 1000
     
     # offset between server and client in miliseconds
     @serverTimeOffset = 0
@@ -77,6 +93,7 @@ class @HomeIOMeasGraphMulti
   currentTime: () ->
     (new Date()).getTime()
   
+ 
   # gets everything what is important for drawing graphs
   getFromApi: () ->
     $.getJSON "/api/settings.json",  (data) =>
@@ -91,7 +108,10 @@ class @HomeIOMeasGraphMulti
           # lower than 0 means time of last measurement from backend is lower than client current time
           @serverTimeOffset = @meases[0].buffer.lastTime - @currentTime()
           console.log "server time offset " + @serverTimeOffset
-
+          
+          # store earliest time
+          @historyEarliestTime = @meases[0].buffer.earliestTime
+          
         # prepare buffers and stuff
         for meas in @meases
           @measesHash[meas.name] = meas
@@ -108,17 +128,24 @@ class @HomeIOMeasGraphMulti
   # some systems are dynamic, some not
   # allow it to use one frontend code to all graphs and all systems
   calculateInterval: () ->
-    if @periodicDynamic
-      oldInterval = @periodicInterval
-      @periodicInterval = @settings.meas.cycleInterval * @periodicDynamicMultiplier
+    if @mode == 'history'
+      # history mode
+      @periodicInterval = @historyInterval
+      
+    else
+      # normal mode
+      if @periodicDynamic
+        oldInterval = @periodicInterval
+        @periodicInterval = @settings.meas.cycleInterval * @periodicDynamicMultiplier
         
-      if @periodicInterval < @periodicDynamicMinimum 
-        @periodicInterval = @periodicDynamicMinimum
-      if @periodicInterval > @periodicDynamicMaximum 
-        @periodicInterval = @periodicDynamicMaximum
+        if @periodicInterval < @periodicDynamicMinimum 
+          @periodicInterval = @periodicDynamicMinimum
+        if @periodicInterval > @periodicDynamicMaximum 
+          @periodicInterval = @periodicDynamicMaximum
         
-      if @periodicInterval != oldInterval
-        console.log "interval changed from " + oldInterval + " to " + @periodicInterval
+        if @periodicInterval != oldInterval
+          console.log "interval changed from " + oldInterval + " to " + @periodicInterval
+        
   
   # meas checkboxes are used to choose what measurements should be displayed
   # it renders also graph container
@@ -180,8 +207,16 @@ class @HomeIOMeasGraphMulti
     $(@containerGraph).resize (event) =>
       @plot = null
       @plotGraph()
-      
  
+  urlForMeas: (name, timeFrom, timeTo) =>
+    if @mode == "history"
+      url = "/api/meas/" + name + "/raw_history_for_time/" + timeFrom + "/" + timeTo + "/" + @historyMaxBufferSize + "/.json"
+    else
+      # normal
+      url = "/api/meas/" + name + "/raw_for_time/" + timeFrom + "/" + timeTo + "/.json"
+    return url  
+ 
+
   # fetch all needed data to render fresh graph  
   renderGraph: () =>
     # set time ranges for current graph
@@ -195,24 +230,48 @@ class @HomeIOMeasGraphMulti
     for measName in Object.keys(@enabled)
       if @enabled[measName]
         enabledCount += 1
+
+        # history mode update time range
+        # to display whole buffer
+        if @mode == 'history'
+          if @historyUseFullRange
+            # use to show from earliest measurement in
+            # backend buffer
+            @timeRange = @timeTo - @historyEarliestTime
+          else
+            # use standard time range 
+            @timeRange = @historyTimeRange
+          
+          # update @timeFrom
+          @timeFrom = @timeTo - @timeRange
+          
+          # and reset lastTime and buffer every time
+          @lastTime[measName] = null
+          @buffer[measName] = []
+          
         
         # mark as this meas type is NOT ready
         @processedReady[measName] = false
 
-        # calculate timeFrom, add offset
+        # calculate timeFrom
         timeFrom = @timeTo - @timeRange
         if @lastTime[measName]
           if @lastTime[measName] > timeFrom
             timeFrom = @lastTime[measName]
         
+        # add offset
         timeFrom += @serverTimeOffset
         timeTo = @timeTo + @serverTimeOffset
         
-        url = "/api/meas/" + measName + "/raw_for_time/" + timeFrom + "/" + timeTo + "/.json"
+        url = @urlForMeas(measName, timeFrom, timeTo)
         $.getJSON url, (response) =>
           measName = response.meas_type
           length = response.data.length
           i = 0
+      
+          # update earliest time
+          if response.earliestTime > @historyEarliestTime
+            @historyEarliestTime = earliestTime
       
           for d in response.data
             # convert raw values to [time,value]

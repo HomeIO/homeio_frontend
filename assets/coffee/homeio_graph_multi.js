@@ -7,8 +7,10 @@
       this.plotGraph = bind(this.plotGraph, this);
       this.isAllDataReadyToPlot = bind(this.isAllDataReadyToPlot, this);
       this.renderGraph = bind(this.renderGraph, this);
+      this.urlForMeas = bind(this.urlForMeas, this);
       this.renderControls = bind(this.renderControls, this);
       this.container = null;
+      this.mode = 'normal';
       this.meases = [];
       this.measesHash = {};
       this.settings = {};
@@ -18,12 +20,17 @@
       this.processedReady = {};
       this.timeFrom = null;
       this.timeTo = null;
-      this.timeRange = 60 * 1000;
+      this.timeRange = 120 * 1000;
       this.periodicInterval = 4000;
       this.periodicDynamic = false;
       this.periodicDynamicMultiplier = 5;
       this.periodicDynamicMinimum = 2000;
       this.periodicDynamicMaximum = 10000;
+      this.historyMaxBufferSize = 800;
+      this.historyUseFullRange = true;
+      this.historyEarliestTime = 0;
+      this.historyTimeRange = 12 * 3600 * 1000;
+      this.historyInterval = 3600 * 1000;
       this.serverTimeOffset = 0;
       this.flotOptions = {
         series: {
@@ -68,6 +75,7 @@
             if (_this.meases.length > 0) {
               _this.serverTimeOffset = _this.meases[0].buffer.lastTime - _this.currentTime();
               console.log("server time offset " + _this.serverTimeOffset);
+              _this.historyEarliestTime = _this.meases[0].buffer.earliestTime;
             }
             ref = _this.meases;
             for (j = 0, len = ref.length; j < len; j++) {
@@ -89,17 +97,21 @@
 
     HomeIOMeasGraphMulti.prototype.calculateInterval = function() {
       var oldInterval;
-      if (this.periodicDynamic) {
-        oldInterval = this.periodicInterval;
-        this.periodicInterval = this.settings.meas.cycleInterval * this.periodicDynamicMultiplier;
-        if (this.periodicInterval < this.periodicDynamicMinimum) {
-          this.periodicInterval = this.periodicDynamicMinimum;
-        }
-        if (this.periodicInterval > this.periodicDynamicMaximum) {
-          this.periodicInterval = this.periodicDynamicMaximum;
-        }
-        if (this.periodicInterval !== oldInterval) {
-          return console.log("interval changed from " + oldInterval + " to " + this.periodicInterval);
+      if (this.mode === 'history') {
+        return this.periodicInterval = this.historyInterval;
+      } else {
+        if (this.periodicDynamic) {
+          oldInterval = this.periodicInterval;
+          this.periodicInterval = this.settings.meas.cycleInterval * this.periodicDynamicMultiplier;
+          if (this.periodicInterval < this.periodicDynamicMinimum) {
+            this.periodicInterval = this.periodicDynamicMinimum;
+          }
+          if (this.periodicInterval > this.periodicDynamicMaximum) {
+            this.periodicInterval = this.periodicDynamicMaximum;
+          }
+          if (this.periodicInterval !== oldInterval) {
+            return console.log("interval changed from " + oldInterval + " to " + this.periodicInterval);
+          }
         }
       }
     };
@@ -159,6 +171,16 @@
       })(this));
     };
 
+    HomeIOMeasGraphMulti.prototype.urlForMeas = function(name, timeFrom, timeTo) {
+      var url;
+      if (this.mode === "history") {
+        url = "/api/meas/" + name + "/raw_history_for_time/" + timeFrom + "/" + timeTo + "/" + this.historyMaxBufferSize + "/.json";
+      } else {
+        url = "/api/meas/" + name + "/raw_for_time/" + timeFrom + "/" + timeTo + "/.json";
+      }
+      return url;
+    };
+
     HomeIOMeasGraphMulti.prototype.renderGraph = function() {
       var enabledCount, j, len, measName, ref, timeFrom, timeTo, url;
       this.timeTo = this.currentTime();
@@ -169,6 +191,16 @@
         measName = ref[j];
         if (this.enabled[measName]) {
           enabledCount += 1;
+          if (this.mode === 'history') {
+            if (this.historyUseFullRange) {
+              this.timeRange = this.timeTo - this.historyEarliestTime;
+            } else {
+              this.timeRange = this.historyTimeRange;
+            }
+            this.timeFrom = this.timeTo - this.timeRange;
+            this.lastTime[measName] = null;
+            this.buffer[measName] = [];
+          }
           this.processedReady[measName] = false;
           timeFrom = this.timeTo - this.timeRange;
           if (this.lastTime[measName]) {
@@ -178,13 +210,16 @@
           }
           timeFrom += this.serverTimeOffset;
           timeTo = this.timeTo + this.serverTimeOffset;
-          url = "/api/meas/" + measName + "/raw_for_time/" + timeFrom + "/" + timeTo + "/.json";
+          url = this.urlForMeas(measName, timeFrom, timeTo);
           $.getJSON(url, (function(_this) {
             return function(response) {
               var d, i, k, l, len1, len2, length, newBuffer, oldBuffer, ref1, x, y;
               measName = response.meas_type;
               length = response.data.length;
               i = 0;
+              if (response.earliestTime > _this.historyEarliestTime) {
+                _this.historyEarliestTime = earliestTime;
+              }
               ref1 = response.data;
               for (k = 0, len1 = ref1.length; k < len1; k++) {
                 d = ref1[k];
