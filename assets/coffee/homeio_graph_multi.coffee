@@ -30,12 +30,14 @@ class @HomeIOMeasGraphMulti
     @buffer = {}
     # last fetches measurements
     @lastTime = {}
+    # which data were processed now
+    @processedReady = {}
     
     # time ranges
     @timeFrom = null
     @timeTo = null
     # amount of seconds represented in graph
-    @timeRange = 120 * 1000
+    @timeRange = 60 * 1000
     
     # refresh every miliseconds, default value
     @periodicInterval = 4000
@@ -88,6 +90,7 @@ class @HomeIOMeasGraphMulti
         if @meases.length > 0
           # lower than 0 means time of last measurement from backend is lower than client current time
           @serverTimeOffset = @meases[0].buffer.lastTime - @currentTime()
+          console.log "server time offset " + @serverTimeOffset
 
         # prepare buffers and stuff
         for meas in @meases
@@ -162,6 +165,8 @@ class @HomeIOMeasGraphMulti
       name = obj.data("meas-name")
       @enabled[name] = obj.is(':checked')
       
+      console.log "meas " + name + " is " + @enabled[name]
+      
       # when user disable meas type from graph
       # clean buffer to maintain data when
       # enabling it in future
@@ -170,60 +175,35 @@ class @HomeIOMeasGraphMulti
         @lastTime[name] = null
       
       @renderGraph()
-      
+
+    # hax for maximizing graph area
     $(@containerGraph).resize (event) =>
-      #
       @plot = null
       @plotGraph()
       
+ 
+  # fetch all needed data to render fresh graph  
   renderGraph: () =>
-    @recalculateTimeRanges()
-    @normalizeDataForTime()
-    @fetchRawData()
-  
-  # set time ranges for current graph
-  recalculateTimeRanges: () =>
+    # set time ranges for current graph
     @timeTo = @currentTime()
     @timeFrom = @timeTo - @timeRange
-  
-  # remove data older than @timeFrom
-  normalizeDataForTime: () ->
-    timeFrom = @timeFrom + @serverTimeOffset
-    timeTo = @timeTo + @serverTimeOffset
- 
-    for meas in @meases
-      oldBuffer = @buffer[meas.name]
-      newBuffer = []
-      
-      # only use data in time range
-      for d in oldBuffer
-        if (d[0] >= timeFrom) && (d[0] <= timeTo)
-          newBuffer.push d
-      
-      # must be sorted to eliminate quirks
-      newBuffer = newBuffer.sort((a, b) ->
-        a[0] - b[0]
-      )
-      
-      @buffer[meas.name] = newBuffer
-
-      # mark last time
-      if newBuffer.length > 0
-        @lastTime[meas.name] = newBuffer[newBuffer.length - 1][0]
-        
-  # fetch all needed data to render fresh graph  
-  fetchRawData: () =>
+    
+    # allow to render 0 meas types
+    enabledCount = 0
+    
     # fetch all enabled measurement raw data
     for measName in Object.keys(@enabled)
       if @enabled[measName]
+        enabledCount += 1
         
+        # mark as this meas type is NOT ready
+        @processedReady[measName] = false
+
         # calculate timeFrom, add offset
         timeFrom = @timeTo - @timeRange
-        console.log @lastTime
         if @lastTime[measName]
-          timeFrom = @lastTime[measName]
-        
-        # TODO add condition to
+          if @lastTime[measName] > timeFrom
+            timeFrom = @lastTime[measName]
         
         timeFrom += @serverTimeOffset
         timeTo = @timeTo + @serverTimeOffset
@@ -235,14 +215,57 @@ class @HomeIOMeasGraphMulti
           i = 0
       
           for d in response.data
+            # convert raw values to [time,value]
             x = (response.lastTime - ((length - i) * response.interval))
             y = ( parseFloat(d) + @measesHash[measName].coefficientOffset ) * @measesHash[measName].coefficientLinear
             
             i += 1
             @buffer[measName].push [x, y]
           
-    @plotGraph()
-    
+          # normalize data after fetch and first process
+          oldBuffer = @buffer[measName]
+          newBuffer = []
+      
+          # only use data in time range
+          for d in oldBuffer
+            if (d[0] >= @timeFrom) && (d[0] <= @timeTo)
+              newBuffer.push d
+      
+          # must be sorted to eliminate quirks
+          newBuffer = newBuffer.sort((a, b) ->
+            a[0] - b[0]
+          )
+      
+          # replace normalized array
+          @buffer[measName] = newBuffer
+
+          # mark last time
+          if newBuffer.length > 0
+            @lastTime[measName] = newBuffer[newBuffer.length - 1][0]
+            
+          # mark as this meas type is ready
+          @processedReady[measName] = true
+          
+          # render graph if all meas types were fetched and processed
+          if @isAllDataReadyToPlot()
+            @plotGraph()
+
+    # there is no graph enabled, render empty
+    if enabledCount == 0
+      @plotGraph()
+
+
+  isAllDataReadyToPlot: () =>
+    ready = true
+    for measName in Object.keys(@enabled)
+      if @enabled[measName]
+        if @processedReady[measName]
+          # ok
+        else
+          ready = false
+    return ready      
+        
+  
   plotGraph: () =>  
     graphData = []
     for measName in Object.keys(@buffer)

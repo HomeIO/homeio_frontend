@@ -5,8 +5,7 @@
   this.HomeIOMeasGraphMulti = (function() {
     function HomeIOMeasGraphMulti() {
       this.plotGraph = bind(this.plotGraph, this);
-      this.fetchRawData = bind(this.fetchRawData, this);
-      this.recalculateTimeRanges = bind(this.recalculateTimeRanges, this);
+      this.isAllDataReadyToPlot = bind(this.isAllDataReadyToPlot, this);
       this.renderGraph = bind(this.renderGraph, this);
       this.renderControls = bind(this.renderControls, this);
       this.container = null;
@@ -16,9 +15,10 @@
       this.enabled = {};
       this.buffer = {};
       this.lastTime = {};
+      this.processedReady = {};
       this.timeFrom = null;
       this.timeTo = null;
-      this.timeRange = 120 * 1000;
+      this.timeRange = 60 * 1000;
       this.periodicInterval = 4000;
       this.periodicDynamic = false;
       this.periodicDynamicMultiplier = 5;
@@ -67,6 +67,7 @@
             _this.meases = data.array;
             if (_this.meases.length > 0) {
               _this.serverTimeOffset = _this.meases[0].buffer.lastTime - _this.currentTime();
+              console.log("server time offset " + _this.serverTimeOffset);
             }
             ref = _this.meases;
             for (j = 0, len = ref.length; j < len; j++) {
@@ -142,6 +143,7 @@
           obj = $(event.currentTarget);
           name = obj.data("meas-name");
           _this.enabled[name] = obj.is(':checked');
+          console.log("meas " + name + " is " + _this.enabled[name]);
           if (_this.enabled[name] !== true) {
             _this.buffer[name] = [];
             _this.lastTime[name] = null;
@@ -158,80 +160,82 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderGraph = function() {
-      this.recalculateTimeRanges();
-      this.normalizeDataForTime();
-      return this.fetchRawData();
-    };
-
-    HomeIOMeasGraphMulti.prototype.recalculateTimeRanges = function() {
+      var enabledCount, j, len, measName, ref, timeFrom, timeTo, url;
       this.timeTo = this.currentTime();
-      return this.timeFrom = this.timeTo - this.timeRange;
-    };
-
-    HomeIOMeasGraphMulti.prototype.normalizeDataForTime = function() {
-      var d, j, k, len, len1, meas, newBuffer, oldBuffer, ref, results, timeFrom, timeTo;
-      timeFrom = this.timeFrom + this.serverTimeOffset;
-      timeTo = this.timeTo + this.serverTimeOffset;
-      ref = this.meases;
-      results = [];
-      for (j = 0, len = ref.length; j < len; j++) {
-        meas = ref[j];
-        oldBuffer = this.buffer[meas.name];
-        newBuffer = [];
-        for (k = 0, len1 = oldBuffer.length; k < len1; k++) {
-          d = oldBuffer[k];
-          if ((d[0] >= timeFrom) && (d[0] <= timeTo)) {
-            newBuffer.push(d);
-          }
-        }
-        newBuffer = newBuffer.sort(function(a, b) {
-          return a[0] - b[0];
-        });
-        this.buffer[meas.name] = newBuffer;
-        if (newBuffer.length > 0) {
-          results.push(this.lastTime[meas.name] = newBuffer[newBuffer.length - 1][0]);
-        } else {
-          results.push(void 0);
-        }
-      }
-      return results;
-    };
-
-    HomeIOMeasGraphMulti.prototype.fetchRawData = function() {
-      var j, len, measName, ref, timeFrom, timeTo, url;
+      this.timeFrom = this.timeTo - this.timeRange;
+      enabledCount = 0;
       ref = Object.keys(this.enabled);
       for (j = 0, len = ref.length; j < len; j++) {
         measName = ref[j];
         if (this.enabled[measName]) {
+          enabledCount += 1;
+          this.processedReady[measName] = false;
           timeFrom = this.timeTo - this.timeRange;
-          console.log(this.lastTime);
           if (this.lastTime[measName]) {
-            timeFrom = this.lastTime[measName];
+            if (this.lastTime[measName] > timeFrom) {
+              timeFrom = this.lastTime[measName];
+            }
           }
           timeFrom += this.serverTimeOffset;
           timeTo = this.timeTo + this.serverTimeOffset;
           url = "/api/meas/" + measName + "/raw_for_time/" + timeFrom + "/" + timeTo + "/.json";
           $.getJSON(url, (function(_this) {
             return function(response) {
-              var d, i, k, len1, length, ref1, results, x, y;
+              var d, i, k, l, len1, len2, length, newBuffer, oldBuffer, ref1, x, y;
               measName = response.meas_type;
               length = response.data.length;
               i = 0;
               ref1 = response.data;
-              results = [];
               for (k = 0, len1 = ref1.length; k < len1; k++) {
                 d = ref1[k];
                 x = response.lastTime - ((length - i) * response.interval);
                 y = (parseFloat(d) + _this.measesHash[measName].coefficientOffset) * _this.measesHash[measName].coefficientLinear;
                 i += 1;
-                results.push(_this.buffer[measName].push([x, y]));
+                _this.buffer[measName].push([x, y]);
               }
-              return results;
+              oldBuffer = _this.buffer[measName];
+              newBuffer = [];
+              for (l = 0, len2 = oldBuffer.length; l < len2; l++) {
+                d = oldBuffer[l];
+                if ((d[0] >= _this.timeFrom) && (d[0] <= _this.timeTo)) {
+                  newBuffer.push(d);
+                }
+              }
+              newBuffer = newBuffer.sort(function(a, b) {
+                return a[0] - b[0];
+              });
+              _this.buffer[measName] = newBuffer;
+              if (newBuffer.length > 0) {
+                _this.lastTime[measName] = newBuffer[newBuffer.length - 1][0];
+              }
+              _this.processedReady[measName] = true;
+              if (_this.isAllDataReadyToPlot()) {
+                return _this.plotGraph();
+              }
             };
           })(this));
         }
       }
-      return this.plotGraph();
+      if (enabledCount === 0) {
+        return this.plotGraph();
+      }
+    };
+
+    HomeIOMeasGraphMulti.prototype.isAllDataReadyToPlot = function() {
+      var j, len, measName, ready, ref;
+      ready = true;
+      ref = Object.keys(this.enabled);
+      for (j = 0, len = ref.length; j < len; j++) {
+        measName = ref[j];
+        if (this.enabled[measName]) {
+          if (this.processedReady[measName]) {
+
+          } else {
+            ready = false;
+          }
+        }
+      }
+      return ready;
     };
 
     HomeIOMeasGraphMulti.prototype.plotGraph = function() {
