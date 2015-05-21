@@ -1,6 +1,6 @@
 .header
   %h2
-    Multigraph - current
+    Multigraph - 1 day
 
 .content-inner
   #measGraphMulti
@@ -10,5 +10,6 @@
   var g = new HomeIOMeasGraphMulti;
   g.container = "#measGraphMulti";
   g.mode = 'history';
-  g.historyUseFullRange = true;
+  g.historyUseFullRange = false;
+  g.historyTimeRange = 24 * 3600 * 1000;
   g.start()  

@@ -75,6 +75,9 @@
             if (_this.meases.length > 0) {
               _this.serverTimeOffset = _this.meases[0].buffer.lastTime - _this.currentTime();
               console.log("server time offset " + _this.serverTimeOffset);
+              if (_this.meases[0].buffer.earliestTime === void 0) {
+                _this.meases[0].buffer.earliestTime = _this.meases[0].buffer.lastTime - _this.meases[0].buffer.count * _this.meases[0].buffer.interval;
+              }
               _this.historyEarliestTime = _this.meases[0].buffer.earliestTime;
             }
             ref = _this.meases;
@@ -217,6 +220,9 @@
               measName = response.meas_type;
               length = response.data.length;
               i = 0;
+              if (response.earliestTime === void 0) {
+                response.earliestTime = response.lastTime - response.count * response.interval;
+              }
               if (response.earliestTime > _this.historyEarliestTime) {
                 _this.historyEarliestTime = earliestTime;
               }

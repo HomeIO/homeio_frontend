@@ -109,6 +109,10 @@ class @HomeIOMeasGraphMulti
           @serverTimeOffset = @meases[0].buffer.lastTime - @currentTime()
           console.log "server time offset " + @serverTimeOffset
           
+          # background compat
+          if @meases[0].buffer.earliestTime == undefined
+            @meases[0].buffer.earliestTime = @meases[0].buffer.lastTime - @meases[0].buffer.count * @meases[0].buffer.interval
+
           # store earliest time
           @historyEarliestTime = @meases[0].buffer.earliestTime
           
@@ -263,12 +267,16 @@ class @HomeIOMeasGraphMulti
         timeFrom += @serverTimeOffset
         timeTo = @timeTo + @serverTimeOffset
         
+        
         url = @urlForMeas(measName, timeFrom, timeTo)
         $.getJSON url, (response) =>
           measName = response.meas_type
           length = response.data.length
           i = 0
-      
+
+          # backward compat.
+          if response.earliestTime == undefined
+            response.earliestTime = response.lastTime - response.count * response.interval
           # update earliest time
           if response.earliestTime > @historyEarliestTime
             @historyEarliestTime = earliestTime
