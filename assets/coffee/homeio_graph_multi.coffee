@@ -39,10 +39,12 @@ class @HomeIOMeasGraphMulti
     
     # refresh every miliseconds, default value
     @periodicInterval = 4000
-    # TODO
+    # more inteligent way to calculate interval
+    # usable in all systems
     @periodicDynamic = false
     @periodicDynamicMultiplier = 5
     @periodicDynamicMinimum = 2000
+    @periodicDynamicMaximum = 10000
     
     # offset between server and client in miliseconds
     @serverTimeOffset = 0
@@ -76,7 +78,8 @@ class @HomeIOMeasGraphMulti
   # gets everything what is important for drawing graphs
   getFromApi: () ->
     $.getJSON "/api/settings.json",  (data) =>
-      @settings = data
+      @settings = data.object
+      @calculateInterval()
       
       $.getJSON "/api/meas.json",  (data) =>
         @meases = data.array
@@ -98,6 +101,21 @@ class @HomeIOMeasGraphMulti
     @renderControls()
     @renderGraph()
     setInterval @renderGraph, @periodicInterval
+ 
+  # some systems are dynamic, some not
+  # allow it to use one frontend code to all graphs and all systems
+  calculateInterval: () ->
+    if @periodicDynamic
+      oldInterval = @periodicInterval
+      @periodicInterval = @settings.meas.cycleInterval * @periodicDynamicMultiplier
+        
+      if @periodicInterval < @periodicDynamicMinimum 
+        @periodicInterval = @periodicDynamicMinimum
+      if @periodicInterval > @periodicDynamicMaximum 
+        @periodicInterval = @periodicDynamicMaximum
+        
+      if @periodicInterval != oldInterval
+        console.log "interval changed from " + oldInterval + " to " + @periodicInterval
   
   # meas checkboxes are used to choose what measurements should be displayed
   # it renders also graph container

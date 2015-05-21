@@ -138,7 +138,6 @@ $ ->
           element = innerObj.get(0)
           paddingTop = 60 # yeah :>
           oh = element.offsetTop - element.scrollTop + element.clientTop + paddingTop
-          console.log oh, element.offsetTop, element.scrollTop, element.clientTop
           ih = h - oh
 
           if h > 200

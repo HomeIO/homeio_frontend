@@ -23,6 +23,7 @@
       this.periodicDynamic = false;
       this.periodicDynamicMultiplier = 5;
       this.periodicDynamicMinimum = 2000;
+      this.periodicDynamicMaximum = 10000;
       this.serverTimeOffset = 0;
       this.flotOptions = {
         series: {
@@ -59,7 +60,8 @@
     HomeIOMeasGraphMulti.prototype.getFromApi = function() {
       return $.getJSON("/api/settings.json", (function(_this) {
         return function(data) {
-          _this.settings = data;
+          _this.settings = data.object;
+          _this.calculateInterval();
           return $.getJSON("/api/meas.json", function(data) {
             var j, len, meas, ref;
             _this.meases = data.array;
@@ -82,6 +84,23 @@
       this.renderControls();
       this.renderGraph();
       return setInterval(this.renderGraph, this.periodicInterval);
+    };
+
+    HomeIOMeasGraphMulti.prototype.calculateInterval = function() {
+      var oldInterval;
+      if (this.periodicDynamic) {
+        oldInterval = this.periodicInterval;
+        this.periodicInterval = this.settings.meas.cycleInterval * this.periodicDynamicMultiplier;
+        if (this.periodicInterval < this.periodicDynamicMinimum) {
+          this.periodicInterval = this.periodicDynamicMinimum;
+        }
+        if (this.periodicInterval > this.periodicDynamicMaximum) {
+          this.periodicInterval = this.periodicDynamicMaximum;
+        }
+        if (this.periodicInterval !== oldInterval) {
+          return console.log("interval changed from " + oldInterval + " to " + this.periodicInterval);
+        }
+      }
     };
 
     HomeIOMeasGraphMulti.prototype.renderControls = function() {
