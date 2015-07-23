@@ -28,9 +28,19 @@ app = $.sammy("#main", ->
     context.render("/assets/templates/multigraph/full_range.haml",
     ).appendTo context.$element()
 
+  @get "#/multigraph/history/week", (context) ->
+    context.app.swap('')
+    context.render("/assets/templates/multigraph/history_week.haml",
+    ).appendTo context.$element()
+
   @get "#/multigraph/history/day", (context) ->
     context.app.swap('')
     context.render("/assets/templates/multigraph/history_day.haml",
+    ).appendTo context.$element()
+
+  @get "#/multigraph/history/hour", (context) ->
+    context.app.swap('')
+    context.render("/assets/templates/multigraph/history_hour.haml",
     ).appendTo context.$element()
             
   @get "#/measurements/:measName", (context) ->
