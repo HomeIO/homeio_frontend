@@ -18,6 +18,13 @@ app = $.sammy("#main", ->
           context.render "/assets/templates/meas/_index_item_graph.haml", {meas: meas}, (meas_html) ->
             $("#measGraphArray").append meas_html
 
+  @get "#/graph/:range/:meases", (context) ->
+    context.app.swap('')
+    context.render("/assets/templates/multigraph/graph.haml",
+                    range: @params['range'],
+                    meases: @params['meases']
+    ).appendTo context.$element()
+
   @get "#/multigraph/current", (context) ->
     context.app.swap('')
     context.render("/assets/templates/multigraph/current.haml",
@@ -147,6 +154,7 @@ $ ->
     
       clearTimeout $.data(this, "resizeTimer")
       $.data this, "resizeTimer", setTimeout(=>
+        #console.log("resize")
 
         h = event.currentTarget.innerHeight
         $('body').height(h)
@@ -166,11 +174,11 @@ $ ->
         $('.resizable').trigger('resize')
         $.data(this, "resizeBlock", false)
       
-      , 500)
+      , 100)
    
    setTimeout(=>
     $(window).trigger('resize')   
-   , 200) 
+   , 20) 
 
 
     

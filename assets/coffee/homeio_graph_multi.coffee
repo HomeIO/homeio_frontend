@@ -44,6 +44,10 @@ class @HomeIOMeasGraphMulti
     # amount of seconds represented in graph
     @timeRange = 120 * 1000
     
+    # preselected meases
+    # if string occurs there it
+    @checkedMeases = null
+    
     # refresh every miliseconds, default value
     @periodicInterval = 4000
     # more inteligent way to calculate interval
@@ -174,12 +178,25 @@ class @HomeIOMeasGraphMulti
       div = $("<div\>",
         class: "multi-graph-checkbox-element"
       )
+
+      if @checkedMeases == null
+        @checkedMeases = ""
+
+      if (@checkedMeases.indexOf(meas.name) > -1)
+        is_checked = true
+        
+        # prepare array and start getting data
+        @enabled[meas.name] = true
+        @buffer[meas.name] = []
+        @lastTime[meas.name] = null
+      else
+        is_checked = false
       
       $("<input\>",
         type: "checkbox"
         name: meas.name
         id: checkboxId
-        checked: null
+        checked: is_checked
         class: "multi-graph-checkbox"
         "data-meas-name": meas.name  
       ).appendTo(div)

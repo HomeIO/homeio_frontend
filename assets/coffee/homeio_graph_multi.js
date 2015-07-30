@@ -21,6 +21,7 @@
       this.timeFrom = null;
       this.timeTo = null;
       this.timeRange = 120 * 1000;
+      this.checkedMeases = null;
       this.periodicInterval = 4000;
       this.periodicDynamic = false;
       this.periodicDynamicMultiplier = 5;
@@ -120,7 +121,7 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderControls = function() {
-      var checkboxId, div, j, len, meas, ref;
+      var checkboxId, div, is_checked, j, len, meas, ref;
       this.containerCheckbox = this.container + "_checkboxes";
       this.containerGraph = this.container + "_graph";
       $(this.container).addClass("multi-graph-container");
@@ -139,11 +140,22 @@
         div = $("<div\>", {
           "class": "multi-graph-checkbox-element"
         });
+        if (this.checkedMeases === null) {
+          this.checkedMeases = "";
+        }
+        if (this.checkedMeases.indexOf(meas.name) > -1) {
+          is_checked = true;
+          this.enabled[meas.name] = true;
+          this.buffer[meas.name] = [];
+          this.lastTime[meas.name] = null;
+        } else {
+          is_checked = false;
+        }
         $("<input\>", {
           type: "checkbox",
           name: meas.name,
           id: checkboxId,
-          checked: null,
+          checked: is_checked,
           "class": "multi-graph-checkbox",
           "data-meas-name": meas.name
         }).appendTo(div);

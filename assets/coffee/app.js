@@ -36,6 +36,13 @@
         });
       });
     });
+    this.get("#/graph/:range/:meases", function(context) {
+      context.app.swap('');
+      return context.render("/assets/templates/multigraph/graph.haml", {
+        range: this.params['range'],
+        meases: this.params['meases']
+      }).appendTo(context.$element());
+    });
     this.get("#/multigraph/current", function(context) {
       context.app.swap('');
       return context.render("/assets/templates/multigraph/current.haml").appendTo(context.$element());
@@ -197,7 +204,7 @@
             }
             $('.resizable').trigger('resize');
             return $.data(_this, "resizeBlock", false);
-          }, 500));
+          }, 100));
         }
       };
     })(this));
@@ -205,7 +212,7 @@
       return function() {
         return $(window).trigger('resize');
       };
-    })(this), 200);
+    })(this), 20);
   });
 
 }).call(this);
