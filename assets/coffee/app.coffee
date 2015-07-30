@@ -18,11 +18,12 @@ app = $.sammy("#main", ->
           context.render "/assets/templates/meas/_index_item_graph.haml", {meas: meas}, (meas_html) ->
             $("#measGraphArray").append meas_html
 
-  @get "#/graph/:range/:meases", (context) ->
+  @get "#/history/:range/:meases", (context) ->
     context.app.swap('')
-    context.render("/assets/templates/multigraph/graph.haml",
+    context.render("/assets/templates/multigraph/history.haml",
                     range: @params['range'],
-                    meases: @params['meases']
+                    meases: @params['meases'],
+                    subname: 'Multigraph - ' + @params['range'] + ' seconds range'
     ).appendTo context.$element()
 
   @get "#/multigraph/current", (context) ->

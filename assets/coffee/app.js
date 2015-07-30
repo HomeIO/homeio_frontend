@@ -36,11 +36,12 @@
         });
       });
     });
-    this.get("#/graph/:range/:meases", function(context) {
+    this.get("#/history/:range/:meases", function(context) {
       context.app.swap('');
-      return context.render("/assets/templates/multigraph/graph.haml", {
+      return context.render("/assets/templates/multigraph/history.haml", {
         range: this.params['range'],
-        meases: this.params['meases']
+        meases: this.params['meases'],
+        subname: 'Multigraph - ' + this.params['range'] + ' seconds range'
       }).appendTo(context.$element());
     });
     this.get("#/multigraph/current", function(context) {
