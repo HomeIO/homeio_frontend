@@ -9,7 +9,6 @@
 
   <link rel="stylesheet" href="/assets/css/pure-min.css">
   <link rel="stylesheet" href="/assets/css/jquery-ui.min.css">
-  <link rel="stylesheet" href="/assets/css/pure-side-menu.css">
   
   <link rel="stylesheet" href="/assets/scss/app.css">
 
@@ -38,19 +37,31 @@
   </a>
 
   <div id="menu">
-    <div class="pure-menu">
+    <div class="pure-menu pure-menu-horizontal">
       <a class="pure-menu-heading" href="#/">HomeIO</a>
 
       <ul class="pure-menu-list">
         <li class="pure-menu-item"><a href="#/measurements" class="pure-menu-link" id="measLink">Measurements</a></li>
-        <li class="pure-menu-item"><a href="#/multigraph/current" class="pure-menu-link" id="">Multigraph current</a></li>
-        <li class="pure-menu-item"><a href="#/history/3600/null" class="pure-menu-link" id="">Multigraph hour</a></li>
-        <li class="pure-menu-item"><a href="#/history/86400/null" class="pure-menu-link" id="">Multigraph day</a></li>
-        <li class="pure-menu-item"><a href="#/history/604800/null" class="pure-menu-link" id="">Multigraph week</a></li>
-        <li class="pure-menu-item"><a href="#/multigraph/history/full_range" class="pure-menu-link" id="">Multigraph full</a></li>
+        
+        <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+            <a href="#" id="menuLink1" class="pure-menu-link">Graph</a>
+            <ul class="pure-menu-children">
+                <li class="pure-menu-item"><a href="#/graph/0/default" class="pure-menu-link" id="">current</a></li>
+                <li class="pure-menu-item"><a href="#/graph/60/default" class="pure-menu-link" id="">minute</a></li>
+                <li class="pure-menu-item"><a href="#/graph/3600/default" class="pure-menu-link" id="">hour</a></li>
+                <li class="pure-menu-item"><a href="#/graph/21600/default" class="pure-menu-link" id="">6 hours</a></li>
+                <li class="pure-menu-item"><a href="#/graph/86400/default" class="pure-menu-link" id="">day</a></li>
+                <li class="pure-menu-item"><a href="#/graph/259200/default" class="pure-menu-link" id="">3 days</a></li>
+                <li class="pure-menu-item"><a href="#/graph/604800/default" class="pure-menu-link" id="">week</a></li>
+                <li class="pure-menu-item"><a href="#/graph/-1/default" class="pure-menu-link" id="">full range</a></li>
+            </ul>
+        </li>
+        
         <li class="pure-menu-item"><a href="#/overseers" class="pure-menu-link" id="overseerLink">Overseers</a></li>
         <li class="pure-menu-item"><a href="#/actions" class="pure-menu-link" id="actionLink">Actions</a></li>
         <li class="pure-menu-item"><a href="#/stats" class="pure-menu-link" id="statsLink">Stats</a></li>
+        
+        
       </ul>
     </div>
   </div>

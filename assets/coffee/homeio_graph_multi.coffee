@@ -182,15 +182,23 @@ class @HomeIOMeasGraphMulti
       if @checkedMeases == null
         @checkedMeases = ""
 
+      # not selected is default
+      is_checked = false
+
+      # preselected meases are in url
       if (@checkedMeases.indexOf(meas.name) > -1)
         is_checked = true
-        
+
+      # when 'default' in url, show all with priority > 0
+      if @checkedMeases == 'default'
+        if parseInt(meas.priority) > 0
+          is_checked = true
+      
+      if is_checked
         # prepare array and start getting data
         @enabled[meas.name] = true
         @buffer[meas.name] = []
         @lastTime[meas.name] = null
-      else
-        is_checked = false
       
       $("<input\>",
         type: "checkbox"
@@ -354,7 +362,8 @@ class @HomeIOMeasGraphMulti
     graphData = []
     for measName in Object.keys(@buffer)
       if @enabled[measName]
-        graphData.push {"label": measName, "data": @buffer[measName]}
+        measUnit = @measesHash[measName].unit
+        graphData.push {"label": measName + " [" + measUnit + "]", "data": @buffer[measName]}
     
     if @plot
       @plot.setData(graphData)

@@ -11,58 +11,34 @@
     this.get("#/measurements", function(context) {
       return this.load("/api/meas.json").then(function(data) {
         return context.partial("/assets/templates/meas/index.haml", function(html) {
-          var i, index, j, len, len1, meas, ref, ref1, results;
+          var i, index, len, meas, ref, results;
           $("#main").html(html);
           ref = data["array"];
+          results = [];
           for (index = i = 0, len = ref.length; i < len; index = ++i) {
             meas = ref[index];
-            context.render("/assets/templates/meas/_index_item.haml", {
+            results.push(context.render("/assets/templates/meas/_index_item.haml", {
               meas: meas
             }, function(meas_html) {
               return $("#measArray").append(meas_html);
-            });
-          }
-          ref1 = data["array"];
-          results = [];
-          for (index = j = 0, len1 = ref1.length; j < len1; index = ++j) {
-            meas = ref1[index];
-            results.push(context.render("/assets/templates/meas/_index_item_graph.haml", {
-              meas: meas
-            }, function(meas_html) {
-              return $("#measGraphArray").append(meas_html);
             }));
           }
           return results;
         });
       });
     });
-    this.get("#/history/:range/:meases", function(context) {
+    this.get("#/graph/:range/:meases", function(context) {
+      var subname;
       context.app.swap('');
-      return context.render("/assets/templates/multigraph/history.haml", {
+      subname = 'Multigraph - ' + this.params['range'] + ' seconds range';
+      if (this.params['range'] < 0) {
+        subname = 'Multigraph - full range';
+      }
+      return context.render("/assets/templates/multigraph/graph.haml", {
         range: this.params['range'],
         meases: this.params['meases'],
-        subname: 'Multigraph - ' + this.params['range'] + ' seconds range'
+        subname: subname
       }).appendTo(context.$element());
-    });
-    this.get("#/multigraph/current", function(context) {
-      context.app.swap('');
-      return context.render("/assets/templates/multigraph/current.haml").appendTo(context.$element());
-    });
-    this.get("#/multigraph/history/full_range", function(context) {
-      context.app.swap('');
-      return context.render("/assets/templates/multigraph/full_range.haml").appendTo(context.$element());
-    });
-    this.get("#/multigraph/history/week", function(context) {
-      context.app.swap('');
-      return context.render("/assets/templates/multigraph/history_week.haml").appendTo(context.$element());
-    });
-    this.get("#/multigraph/history/day", function(context) {
-      context.app.swap('');
-      return context.render("/assets/templates/multigraph/history_day.haml").appendTo(context.$element());
-    });
-    this.get("#/multigraph/history/hour", function(context) {
-      context.app.swap('');
-      return context.render("/assets/templates/multigraph/history_hour.haml").appendTo(context.$element());
     });
     this.get("#/measurements/:measName", function(context) {
       context.app.swap('');

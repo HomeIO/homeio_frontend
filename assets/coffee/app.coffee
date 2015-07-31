@@ -14,43 +14,19 @@ app = $.sammy("#main", ->
           context.render "/assets/templates/meas/_index_item.haml", {meas: meas}, (meas_html) ->
             $("#measArray").append meas_html
 
-        for meas, index in data["array"]
-          context.render "/assets/templates/meas/_index_item_graph.haml", {meas: meas}, (meas_html) ->
-            $("#measGraphArray").append meas_html
-
-  @get "#/history/:range/:meases", (context) ->
+  @get "#/graph/:range/:meases", (context) ->
     context.app.swap('')
-    context.render("/assets/templates/multigraph/history.haml",
+    
+    subname = 'Multigraph - ' + @params['range'] + ' seconds range'
+    if @params['range'] < 0
+      subname = 'Multigraph - full range'
+      
+    context.render("/assets/templates/multigraph/graph.haml",
                     range: @params['range'],
                     meases: @params['meases'],
-                    subname: 'Multigraph - ' + @params['range'] + ' seconds range'
+                    subname: subname
     ).appendTo context.$element()
 
-  @get "#/multigraph/current", (context) ->
-    context.app.swap('')
-    context.render("/assets/templates/multigraph/current.haml",
-    ).appendTo context.$element()
-
-  @get "#/multigraph/history/full_range", (context) ->
-    context.app.swap('')
-    context.render("/assets/templates/multigraph/full_range.haml",
-    ).appendTo context.$element()
-
-  @get "#/multigraph/history/week", (context) ->
-    context.app.swap('')
-    context.render("/assets/templates/multigraph/history_week.haml",
-    ).appendTo context.$element()
-
-  @get "#/multigraph/history/day", (context) ->
-    context.app.swap('')
-    context.render("/assets/templates/multigraph/history_day.haml",
-    ).appendTo context.$element()
-
-  @get "#/multigraph/history/hour", (context) ->
-    context.app.swap('')
-    context.render("/assets/templates/multigraph/history_hour.haml",
-    ).appendTo context.$element()
-            
   @get "#/measurements/:measName", (context) ->
     context.app.swap('')
     @load("/api/meas/" + @params["measName"] + "/.json").then (data) ->

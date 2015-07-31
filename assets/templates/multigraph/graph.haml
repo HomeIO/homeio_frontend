@@ -1,0 +1,35 @@
+.header
+  %h2= subname
+
+.content-inner
+  %input{type: "hidden", value: range, id: 'graphRange'}
+  %input{type: "hidden", value: meases, id: 'graphMeasesChecked'}  
+  #measGraphMulti{data-range: range}
+  
+:javascript
+  var range = $("#graphRange").val();
+  var g = new HomeIOMeasGraphMulti;
+  g.container = "#measGraphMulti";
+  
+  if (range < 0) {
+    // full range
+    g.mode = 'history';
+    g.historyUseFullRange = true;
+  } else if (range == 0) {
+    // current
+    g.periodicDynamic = true;
+    g.periodicDynamicMinimum = 1500;
+    g.periodicDynamicMaximum = 20000;
+    g.periodicDynamicMultiplier = 5;
+  }
+  else {
+    // selective history
+    g.mode = 'history';
+    g.historyUseFullRange = false;
+    g.historyTimeRange = range * 1000;
+  }
+  
+  g.checkedMeases = $("#graphMeasesChecked").val();
+  g.start();  
+  
+  $(window).trigger('resize');  

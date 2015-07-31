@@ -143,13 +143,19 @@
         if (this.checkedMeases === null) {
           this.checkedMeases = "";
         }
+        is_checked = false;
         if (this.checkedMeases.indexOf(meas.name) > -1) {
           is_checked = true;
+        }
+        if (this.checkedMeases === 'default') {
+          if (parseInt(meas.priority) > 0) {
+            is_checked = true;
+          }
+        }
+        if (is_checked) {
           this.enabled[meas.name] = true;
           this.buffer[meas.name] = [];
           this.lastTime[meas.name] = null;
-        } else {
-          is_checked = false;
         }
         $("<input\>", {
           type: "checkbox",
@@ -292,14 +298,15 @@
     };
 
     HomeIOMeasGraphMulti.prototype.plotGraph = function() {
-      var graphData, j, len, measName, ref;
+      var graphData, j, len, measName, measUnit, ref;
       graphData = [];
       ref = Object.keys(this.buffer);
       for (j = 0, len = ref.length; j < len; j++) {
         measName = ref[j];
         if (this.enabled[measName]) {
+          measUnit = this.measesHash[measName].unit;
           graphData.push({
-            "label": measName,
+            "label": measName + " [" + measUnit + "]",
             "data": this.buffer[measName]
           });
         }
