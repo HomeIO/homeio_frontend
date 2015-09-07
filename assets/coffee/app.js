@@ -27,6 +27,10 @@
         });
       });
     });
+    this.get("#/graph", function(context) {
+      context.app.swap('');
+      return context.render("/assets/templates/multigraph/dashboard.haml").appendTo(context.$element());
+    });
     this.get("#/graph/:range/:meases", function(context) {
       var subname;
       context.app.swap('');

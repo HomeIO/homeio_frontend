@@ -14,6 +14,12 @@ app = $.sammy("#main", ->
           context.render "/assets/templates/meas/_index_item.haml", {meas: meas}, (meas_html) ->
             $("#measArray").append meas_html
 
+  @get "#/graph", (context) ->
+    context.app.swap('')
+    
+    context.render("/assets/templates/multigraph/dashboard.haml",
+    ).appendTo context.$element()
+
   @get "#/graph/:range/:meases", (context) ->
     context.app.swap('')
     

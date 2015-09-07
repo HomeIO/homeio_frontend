@@ -107,6 +107,12 @@
         if (this.periodicDynamic) {
           oldInterval = this.periodicInterval;
           this.periodicInterval = this.settings.meas.cycleInterval * this.periodicDynamicMultiplier;
+          this.timeRange = this.settings.meas.cycleInterval * 1000;
+          console.log("timeRange set to " + this.timeRange);
+          if (this.settings.frontend.currentCoeff) {
+            this.timeRange = this.timeRange * this.settings.frontend.currentCoeff;
+            console.log("timeRange updated using coefficient to " + this.timeRange);
+          }
           if (this.periodicInterval < this.periodicDynamicMinimum) {
             this.periodicInterval = this.periodicDynamicMinimum;
           }

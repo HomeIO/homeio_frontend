@@ -145,6 +145,14 @@ class @HomeIOMeasGraphMulti
       if @periodicDynamic
         oldInterval = @periodicInterval
         @periodicInterval = @settings.meas.cycleInterval * @periodicDynamicMultiplier
+        @timeRange = @settings.meas.cycleInterval * 1000
+        console.log "timeRange set to " + @timeRange
+        
+        # some systems are slower or faster
+        # this coefficient allow to set timeRange to nature of the system
+        if @settings.frontend.currentCoeff
+          @timeRange = @timeRange * @settings.frontend.currentCoeff
+          console.log "timeRange updated using coefficient to " + @timeRange
         
         if @periodicInterval < @periodicDynamicMinimum 
           @periodicInterval = @periodicDynamicMinimum
