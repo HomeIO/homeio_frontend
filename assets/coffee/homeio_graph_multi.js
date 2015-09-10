@@ -71,7 +71,7 @@
           _this.settings = data.object;
           _this.calculateInterval();
           return $.getJSON("/api/meas.json", function(data) {
-            var j, len, meas, ref;
+            var k, len, meas, ref;
             _this.meases = data.array;
             if (_this.meases.length > 0) {
               _this.serverTimeOffset = _this.meases[0].buffer.lastTime - _this.currentTime();
@@ -82,8 +82,8 @@
               _this.historyEarliestTime = _this.meases[0].buffer.earliestTime;
             }
             ref = _this.meases;
-            for (j = 0, len = ref.length; j < len; j++) {
-              meas = ref[j];
+            for (k = 0, len = ref.length; k < len; k++) {
+              meas = ref[k];
               _this.measesHash[meas.name] = meas;
               _this.buffer[meas.name] = [];
             }
@@ -127,7 +127,7 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderControls = function() {
-      var checkboxId, div, is_checked, j, len, meas, ref;
+      var checkboxId, div, is_checked, k, len, meas, ref;
       this.containerCheckbox = this.container + "_checkboxes";
       this.containerGraph = this.container + "_graph";
       $(this.container).addClass("multi-graph-container");
@@ -140,8 +140,8 @@
         "class": "multi-graph-checkbox-container"
       }).appendTo($(this.container));
       ref = this.meases;
-      for (j = 0, len = ref.length; j < len; j++) {
-        meas = ref[j];
+      for (k = 0, len = ref.length; k < len; k++) {
+        meas = ref[k];
         checkboxId = this.containerCheckbox.replace("#", "") + "_" + meas.name;
         div = $("<div\>", {
           "class": "multi-graph-checkbox-element"
@@ -209,13 +209,13 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderGraph = function() {
-      var enabledCount, j, len, measName, ref, timeFrom, timeTo, url;
+      var enabledCount, k, len, measName, ref, timeFrom, timeTo, url;
       this.timeTo = this.currentTime();
       this.timeFrom = this.timeTo - this.timeRange;
       enabledCount = 0;
       ref = Object.keys(this.enabled);
-      for (j = 0, len = ref.length; j < len; j++) {
-        measName = ref[j];
+      for (k = 0, len = ref.length; k < len; k++) {
+        measName = ref[k];
         if (this.enabled[measName]) {
           enabledCount += 1;
           if (this.mode === 'history') {
@@ -240,7 +240,7 @@
           url = this.urlForMeas(measName, timeFrom, timeTo);
           $.getJSON(url, (function(_this) {
             return function(response) {
-              var d, i, k, l, len1, len2, length, newBuffer, oldBuffer, ref1, x, y;
+              var absA, absB, d, i, j, l, len1, len2, length, m, n, nd, newBuffer, newD, oldBuffer, ref1, ref2, x, y;
               measName = response.meas_type;
               length = response.data.length;
               i = 0;
@@ -250,9 +250,29 @@
               if (response.earliestTime > _this.historyEarliestTime) {
                 _this.historyEarliestTime = response.earliestTime;
               }
-              ref1 = response.data;
-              for (k = 0, len1 = ref1.length; k < len1; k++) {
-                d = ref1[k];
+              if (_this.measesHash[measName].options && _this.measesHash[measName].options.removeSpikes === 1) {
+                newD = [];
+                for (j = l = 0, ref1 = response.data.length; l <= ref1; j = l += 1) {
+                  nd = 0;
+                  if ((response.data[j - 1] === void 0) || (response.data[j + 1] === void 0)) {
+                    nd = response.data[j];
+                  } else {
+                    absA = Math.abs(response.data[j - 1] - response.data[j + 1]);
+                    absB = Math.abs(response.data[j - 1] - response.data[j]);
+                    if (absB > absA * 10.0) {
+                      console.log("spike at " + j + ": " + response.data[j - 1] + " - " + response.data[j] + " - " + response.data[j + 1]);
+                      nd = response.data[j - 1];
+                    } else {
+                      nd = response.data[j];
+                    }
+                  }
+                  newD.push(nd);
+                }
+                response.data = newD;
+              }
+              ref2 = response.data;
+              for (m = 0, len1 = ref2.length; m < len1; m++) {
+                d = ref2[m];
                 x = response.lastTime - ((length - i) * response.interval);
                 y = (parseFloat(d) + _this.measesHash[measName].coefficientOffset) * _this.measesHash[measName].coefficientLinear;
                 i += 1;
@@ -260,8 +280,8 @@
               }
               oldBuffer = _this.buffer[measName];
               newBuffer = [];
-              for (l = 0, len2 = oldBuffer.length; l < len2; l++) {
-                d = oldBuffer[l];
+              for (n = 0, len2 = oldBuffer.length; n < len2; n++) {
+                d = oldBuffer[n];
                 if ((d[0] >= _this.timeFrom) && (d[0] <= _this.timeTo)) {
                   newBuffer.push(d);
                 }
@@ -287,11 +307,11 @@
     };
 
     HomeIOMeasGraphMulti.prototype.isAllDataReadyToPlot = function() {
-      var j, len, measName, ready, ref;
+      var k, len, measName, ready, ref;
       ready = true;
       ref = Object.keys(this.enabled);
-      for (j = 0, len = ref.length; j < len; j++) {
-        measName = ref[j];
+      for (k = 0, len = ref.length; k < len; k++) {
+        measName = ref[k];
         if (this.enabled[measName]) {
           if (this.processedReady[measName]) {
 
@@ -304,11 +324,11 @@
     };
 
     HomeIOMeasGraphMulti.prototype.plotGraph = function() {
-      var graphData, j, len, measName, measUnit, ref;
+      var graphData, k, len, measName, measUnit, ref;
       graphData = [];
       ref = Object.keys(this.buffer);
-      for (j = 0, len = ref.length; j < len; j++) {
-        measName = ref[j];
+      for (k = 0, len = ref.length; k < len; k++) {
+        measName = ref[k];
         if (this.enabled[measName]) {
           measUnit = this.measesHash[measName].unit;
           graphData.push({

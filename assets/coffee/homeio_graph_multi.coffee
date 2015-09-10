@@ -314,6 +314,28 @@ class @HomeIOMeasGraphMulti
           if response.earliestTime > @historyEarliestTime
             @historyEarliestTime = response.earliestTime
       
+          # remove spikes
+          if @measesHash[measName].options and @measesHash[measName].options.removeSpikes == 1
+            newD = []
+            for j in [0..response.data.length] by 1
+              nd = 0
+              if (response.data[j-1] == undefined) or (response.data[j+1] == undefined)
+                nd = response.data[j]
+              else
+                absA = Math.abs( response.data[j-1] - response.data[j+1] )
+                absB = Math.abs( response.data[j-1] - response.data[j] )
+                # absC = Math.abs( response.data[j] - response.data[j+1] )
+              
+                if (absB > absA * 10.0)
+                  console.log "spike at " + j + ": " + response.data[j-1] + " - " + response.data[j] + " - " + response.data[j+1]
+                  nd = response.data[j-1]
+                else
+                  nd = response.data[j]
+
+              newD.push(nd)
+            
+            response.data = newD 
+      
           for d in response.data
             # convert raw values to [time,value]
             x = (response.lastTime - ((length - i) * response.interval))
