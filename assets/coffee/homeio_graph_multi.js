@@ -14,6 +14,7 @@
       this.meases = [];
       this.measesHash = {};
       this.settings = {};
+      this.measGroups = [];
       this.enabled = {};
       this.buffer = {};
       this.lastTime = {};
@@ -70,24 +71,27 @@
         return function(data) {
           _this.settings = data.object;
           _this.calculateInterval();
-          return $.getJSON("/api/meas.json", function(data) {
-            var k, len, meas, ref;
-            _this.meases = data.array;
-            if (_this.meases.length > 0) {
-              _this.serverTimeOffset = _this.meases[0].buffer.lastTime - _this.currentTime();
-              console.log("server time offset " + _this.serverTimeOffset);
-              if (_this.meases[0].buffer.earliestTime === void 0) {
-                _this.meases[0].buffer.earliestTime = _this.meases[0].buffer.lastTime - _this.meases[0].buffer.count * _this.meases[0].buffer.interval;
+          return $.getJSON("/api/meas_groups.json", function(data) {
+            _this.measGroups = data.array;
+            return $.getJSON("/api/meas.json", function(data) {
+              var k, len, meas, ref;
+              _this.meases = data.array;
+              if (_this.meases.length > 0) {
+                _this.serverTimeOffset = _this.meases[0].buffer.lastTime - _this.currentTime();
+                console.log("server time offset " + _this.serverTimeOffset);
+                if (_this.meases[0].buffer.earliestTime === void 0) {
+                  _this.meases[0].buffer.earliestTime = _this.meases[0].buffer.lastTime - _this.meases[0].buffer.count * _this.meases[0].buffer.interval;
+                  _this.historyEarliestTime = _this.meases[0].buffer.earliestTime;
+                }
               }
-              _this.historyEarliestTime = _this.meases[0].buffer.earliestTime;
-            }
-            ref = _this.meases;
-            for (k = 0, len = ref.length; k < len; k++) {
-              meas = ref[k];
-              _this.measesHash[meas.name] = meas;
-              _this.buffer[meas.name] = [];
-            }
-            return _this.render();
+              ref = _this.meases;
+              for (k = 0, len = ref.length; k < len; k++) {
+                meas = ref[k];
+                _this.measesHash[meas.name] = meas;
+                _this.buffer[meas.name] = [];
+              }
+              return _this.render();
+            });
           });
         };
       })(this));
@@ -127,7 +131,7 @@
     };
 
     HomeIOMeasGraphMulti.prototype.renderControls = function() {
-      var checkboxId, div, is_checked, k, len, meas, ref;
+      var checkboxId, div, group, is_checked, k, l, len, len1, len2, m, meas, measName, ref, ref1, ref2;
       this.containerCheckbox = this.container + "_checkboxes";
       this.containerGraph = this.container + "_graph";
       $(this.container).addClass("multi-graph-container");
@@ -176,6 +180,42 @@
         }).appendTo(div);
         div.appendTo($(this.containerCheckbox));
       }
+      ref1 = this.measGroups;
+      for (l = 0, len1 = ref1.length; l < len1; l++) {
+        group = ref1[l];
+        checkboxId = this.containerCheckbox.replace("#", "") + "_group_" + group.name;
+        div = $("<div\>", {
+          "class": "multi-graph-group-checkbox-element"
+        });
+        if (this.checkedMeases === null) {
+          this.checkedMeases = "";
+        }
+        is_checked = false;
+        if (this.checkedMeases.indexOf(group.name) > -1) {
+          is_checked = true;
+        }
+        if (is_checked) {
+          ref2 = group.measTypes;
+          for (m = 0, len2 = ref2.length; m < len2; m++) {
+            measName = ref2[m];
+            this.enabled[measName] = true;
+            this.buffer[measName] = [];
+            this.lastTime[measName] = null;
+          }
+        }
+        $("<input\>", {
+          type: "checkbox",
+          name: group.name,
+          id: checkboxId,
+          checked: is_checked,
+          "class": "multi-graph-group-checkbox",
+          "data-meas-group-name": group.name
+        }).appendTo(div);
+        $("<label>" + group.name + "</label>", {
+          "for": checkboxId
+        }).appendTo(div);
+        div.appendTo($(this.containerCheckbox));
+      }
       $(".multi-graph-checkbox").change((function(_this) {
         return function(event) {
           var name, obj;
@@ -188,6 +228,42 @@
             _this.lastTime[name] = null;
           }
           return _this.renderGraph();
+        };
+      })(this));
+      $(".multi-graph-group-checkbox").change((function(_this) {
+        return function(event) {
+          var checkboxTag, isEnabled, len3, n, name, obj, ref3, results;
+          obj = $(event.currentTarget);
+          name = obj.data("meas-group-name");
+          isEnabled = obj.is(':checked');
+          console.log("meas group " + name + " is " + isEnabled);
+          ref3 = _this.measGroups;
+          results = [];
+          for (n = 0, len3 = ref3.length; n < len3; n++) {
+            group = ref3[n];
+            if (group.name === name) {
+              results.push((function() {
+                var len4, o, ref4, results1;
+                ref4 = group.measTypes;
+                results1 = [];
+                for (o = 0, len4 = ref4.length; o < len4; o++) {
+                  measName = ref4[o];
+                  checkboxTag = $(".multi-graph-checkbox[data-meas-name=" + measName + "]");
+                  if (isEnabled) {
+                    checkboxTag.prop('checked', true);
+                  } else {
+                    checkboxTag.prop('checked', false);
+                  }
+                  checkboxTag.trigger('change');
+                  results1.push(console.log(checkboxTag));
+                }
+                return results1;
+              })());
+            } else {
+              results.push(void 0);
+            }
+          }
+          return results;
         };
       })(this));
       return $(this.containerGraph).resize((function(_this) {

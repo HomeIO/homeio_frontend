@@ -28,7 +28,7 @@ func checkPassword(hashedPassword string) bool {
   h := hex.EncodeToString(hasher.Sum(nil))
 
   if strings.TrimSpace(h) == strings.TrimSpace(superHashedPassword) {
-    //fmt.Print("password OK\n")    
+    //fmt.Print("password OK\n")
     return true
   } else {
     return false
@@ -74,6 +74,13 @@ func getMeasRawForIndexJson(name string, from uint64,to uint64) string {
 func getMeasStatsJson(name string, from uint64,to uint64) string {
   conn, _ := net.Dial("tcp", "127.0.0.1:2005")
   fmt.Fprintf(conn, "measStats;" + name + ";" + strconv.FormatUint(from, 10) + ";" + strconv.FormatUint(to, 10) + ";\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
+
+func getMeasGroupsJson() string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "measGroups;\n")
   message, _ := bufio.NewReader(conn).ReadString('\n')
   return message
 }
@@ -193,7 +200,12 @@ func main() {
     c.String(http.StatusOK, getMeasStatsJson(measName, from, to))
   })
 
-  // actions#index  
+  // meas#stats
+  r.GET("/api/meas_groups.json", func(c *gin.Context) {
+    c.String(http.StatusOK, getMeasGroupsJson())
+  })
+
+  // actions#index
   r.GET("/api/actions.json", func(c *gin.Context) {
     c.String(http.StatusOK, getActionIndexJson())
   })
@@ -207,7 +219,7 @@ func main() {
   // actions#execute
   r.POST("/api/actions/:name/execute.json", func(c *gin.Context) {
     var actionName string = c.Params.ByName("name")
-    
+
     var pf PasswordForm
     c.Bind(&pf)
     c.String(http.StatusOK, postActionExecuteJson(actionName, c.Request.Form.Get("password") ) )
@@ -234,7 +246,7 @@ func main() {
   r.GET("/api/stats.json", func(c *gin.Context) {
     c.String(http.StatusOK, getStatsJson())
   })
- 
+
   // Listen and serve on 0.0.0.0:8080
   r.Run(":8080")
 }
