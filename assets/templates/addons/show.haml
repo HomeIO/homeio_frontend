@@ -1,8 +1,16 @@
+%input{type: "hidden", name: "name", id: "addon-name", value: addon.name}
+
 .header
   %h2
     Addons
   %h1
     = addon.name
 
-.content-inner
-  = addon
+.content-inner#container
+
+:javascript
+  var r = new HomeIOAddonOutputRenderer;
+  r.name = $("#addon-name").val();
+  r.container = "#container";
+  r.start();
+  console.log(r);

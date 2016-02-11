@@ -132,6 +132,8 @@ app = $.sammy("#main", ->
         addon: addon
       ).appendTo context.$element()
 
+      
+
 
   @get "#/stats", (context) ->
     context.app.swap('')

@@ -5,6 +5,7 @@ css:
 	sass --watch assets/scss/app.scss:assets/scss/app.css --style nested
 
 js:
+	coffee -c assets/coffee/*.coffee ;
 	while [ true ] ; do \
       inotifywait -e modify assets/coffee/*.coffee ; \
       echo "compiling `date`" ; \
