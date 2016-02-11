@@ -1,5 +1,6 @@
 go-deps:
 	go get github.com/gin-gonic/gin
+	go get github.com/gin-gonic/contrib/gzip
 
 css:
 	sass --watch assets/scss/app.scss:assets/scss/app.css --style nested

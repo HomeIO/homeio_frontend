@@ -3,6 +3,7 @@ package main
 import (
   "net/http"
   "github.com/gin-gonic/gin"
+  //"github.com/gin-gonic/contrib/gzip"
   "html/template"
   "net"
   "fmt"
@@ -155,8 +156,9 @@ func getStatsJson() string {
 func main() {
   r := gin.Default()
   r.SetHTMLTemplate(template.Must(template.ParseFiles("assets/templates/layout.tmpl")))
+  //r.Use(gzip.Gzip(gzip.DefaultCompression))
   r.Static("/assets", "./assets")
-  
+
 
   // home#index
   r.GET("/", func(c *gin.Context) {
