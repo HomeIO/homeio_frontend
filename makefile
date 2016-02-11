@@ -16,5 +16,4 @@ run:
 	go run homeio.go
 
 release:
-	export GIN_MODE=release
-	go run homeio.go
+	GIN_MODE=release	go run homeio.go

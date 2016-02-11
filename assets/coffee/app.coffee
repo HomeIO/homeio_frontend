@@ -1,6 +1,6 @@
 app = $.sammy("#main", ->
   @use "Haml"
-  
+
   @get "#/", (context) ->
     context.app.swap('')
     context.render("/assets/templates/index.haml",
@@ -16,17 +16,17 @@ app = $.sammy("#main", ->
 
   @get "#/graph", (context) ->
     context.app.swap('')
-    
+
     context.render("/assets/templates/multigraph/dashboard.haml",
     ).appendTo context.$element()
 
   @get "#/graph/:range/:meases", (context) ->
     context.app.swap('')
-    
+
     subname = 'Multigraph - ' + @params['range'] + ' seconds range'
     if @params['range'] < 0
       subname = 'Multigraph - full range'
-      
+
     context.render("/assets/templates/multigraph/graph.haml",
                     range: @params['range'],
                     meases: @params['meases'],
@@ -45,14 +45,14 @@ app = $.sammy("#main", ->
     context.app.swap('')
     context.render("/assets/templates/meas/graph_detailed.haml",
       meas_name: @params["measName"]
-    ).appendTo context.$element()  
+    ).appendTo context.$element()
 
   @get "#/measurements/:measName/history", (context) ->
     context.app.swap('')
     context.render("/assets/templates/meas/graph_history.haml",
       meas_name: @params["measName"]
-    ).appendTo context.$element()  
-      
+    ).appendTo context.$element()
+
   @get "#/actions", (context) ->
     @load("/api/actions.json").then (data) ->
       context.partial "/assets/templates/actions/index.haml", (html) ->
@@ -73,7 +73,7 @@ app = $.sammy("#main", ->
     $.ajax(
       type: "POST"
       url: "/api/actions/" + @params["name"] + "/execute.json"
-      data: 
+      data:
         password: md5(@params['password'])
         name: @params['name']
       dataType: "JSON"
@@ -85,12 +85,12 @@ app = $.sammy("#main", ->
           $(".action-execute-button").removeClass("pure-button-primary")
           $(".action-execute-button").removeClass("button-error")
           $(".action-execute-button").addClass("button-success")
-          
-        else  
+
+        else
           $(".action-execute-button").removeClass("pure-button-primary")
           $(".action-execute-button").removeClass("button-success")
           $(".action-execute-button").addClass("button-error")
-          
+
 
       ), 500
 
@@ -114,6 +114,25 @@ app = $.sammy("#main", ->
         overseer: overseer
       ).appendTo context.$element()
 
+
+  @get "#/addons", (context) ->
+    @load("/api/addons.json").then (data) ->
+      context.partial "/assets/templates/addons/index.haml", (html) ->
+        $("#main").html html
+        for addon, index in data["array"]
+          context.render "/assets/templates/addons/_index_item.haml", {addon: addon}, (addon_html) ->
+            $("#addonsArray").append addon_html
+
+
+  @get "#/addons/:addonName", (context) ->
+    context.app.swap('')
+    @load("/api/addons/" + @params["addonName"] + "/.json").then (data) ->
+      addon = data["object"]
+      context.render("/assets/templates/addons/show.haml",
+        addon: addon
+      ).appendTo context.$element()
+
+
   @get "#/stats", (context) ->
     context.app.swap('')
     @load("/api/stats.json").then (data) ->
@@ -126,15 +145,15 @@ app = $.sammy("#main", ->
 )
 $ ->
   app.run "#/"
-  
+
   # TODO make is usable on all pages
   # TODO not executed after changing url, without F5
-  
+
   # custom  snippet to make multi-graph big
   $(window).resize (event) =>
     if $.data(this, "resizeBlock") != true
       $.data(this, "resizeBlock", true)
-    
+
       clearTimeout $.data(this, "resizeTimer")
       $.data this, "resizeTimer", setTimeout(=>
         #console.log("resize")
@@ -156,12 +175,9 @@ $ ->
 
         $('.resizable').trigger('resize')
         $.data(this, "resizeBlock", false)
-      
+
       , 100)
-   
+
    setTimeout(=>
-    $(window).trigger('resize')   
-   , 20) 
-
-
-    
+    $(window).trigger('resize')
+   , 20)
