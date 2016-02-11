@@ -288,7 +288,7 @@ class @HomeIOMeasGraphMulti
 
       @renderGraph()
 
-    # dynamically update when checkboxes changed
+    # dynamically update when group checkboxes changed
     $(".multi-graph-group-checkbox").change (event) =>
       obj = $(event.currentTarget)
       name = obj.data("meas-group-name")
@@ -307,9 +307,6 @@ class @HomeIOMeasGraphMulti
               checkboxTag.prop('checked', false)
 
             checkboxTag.trigger('change')
-            console.log checkboxTag
-
-
 
     # hax for maximizing graph area
     $(@containerGraph).resize (event) =>

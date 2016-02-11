@@ -254,8 +254,7 @@
                   } else {
                     checkboxTag.prop('checked', false);
                   }
-                  checkboxTag.trigger('change');
-                  results1.push(console.log(checkboxTag));
+                  results1.push(checkboxTag.trigger('change'));
                 }
                 return results1;
               })());

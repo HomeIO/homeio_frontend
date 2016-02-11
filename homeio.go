@@ -124,6 +124,20 @@ func getOverseerShowJson(name string) string {
   return message
 }
 
+func getAddonIndexJson() string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "addonIndex;\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
+
+func getAddonShowJson(name string) string {
+  conn, _ := net.Dial("tcp", "127.0.0.1:2005")
+  fmt.Fprintf(conn, "addonShow;" + name + ";\n")
+  message, _ := bufio.NewReader(conn).ReadString('\n')
+  return message
+}
+
 func getSettingsJson() string {
   conn, _ := net.Dial("tcp", "127.0.0.1:2005")
   fmt.Fprintf(conn, "settings;\n")
@@ -140,8 +154,9 @@ func getStatsJson() string {
 
 func main() {
   r := gin.Default()
-  r.Static("/assets", "./assets")
   r.SetHTMLTemplate(template.Must(template.ParseFiles("assets/templates/layout.tmpl")))
+  r.Static("/assets", "./assets")
+  
 
   // home#index
   r.GET("/", func(c *gin.Context) {
@@ -235,6 +250,17 @@ func main() {
   r.GET("/api/overseers/:name/.json", func(c *gin.Context) {
     var overseerName string = c.Params.ByName("name")
     c.String(http.StatusOK, getOverseerShowJson(overseerName))
+  })
+
+  // addons#index
+  r.GET("/api/addons.json", func(c *gin.Context) {
+    c.String(http.StatusOK, getAddonIndexJson())
+  })
+
+  // addons#show
+  r.GET("/api/addons/:name/.json", func(c *gin.Context) {
+    var overseerName string = c.Params.ByName("name")
+    c.String(http.StatusOK, getAddonShowJson(overseerName))
   })
 
   // settings
