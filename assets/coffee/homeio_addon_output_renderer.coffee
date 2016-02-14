@@ -39,11 +39,38 @@ class @HomeIOAddonOutputRenderer
 
     $(@container).append(tableHtml)
 
-  # TODO refactor
   timeToString: (t) ->
     date = new Date(parseInt(t))
-    formattedTime = date.getHours() + ':' + ('0' + date.getMinutes().toString()).slice(-2) + ':' + ('0' + date.getSeconds().toString()).slice(-2)
-    formattedTime
+    # dateFormat = require("dateformat")
+    dateFormat date, "yyyy-mm-dd H:MM:ss"
+
+  intervalToString: (timeInterval) ->
+    # ms
+    if timeInterval < 1000
+      return timeInterval + " ms";
+    else
+      timeInterval = Math.round( timeInterval / 1000.0 )
+
+    # s
+    if timeInterval < 600
+      return timeInterval + " s"
+    else
+      timeInterval = Math.round( timeInterval / 60.0 )
+
+    # min
+    if timeInterval < 600
+      return timeInterval + " min"
+    else
+      timeInterval = Math.round( timeInterval / 60.0 )
+
+    # hour
+    if timeInterval < (24*7)
+      return timeInterval + " h";
+    else
+      timeInterval = Math.round( timeInterval / 24.0 )
+
+    return timeInterval + " days"
+
 
   processValue: (row, keyDef) ->
     value = row[keyDef.key]
@@ -64,6 +91,6 @@ class @HomeIOAddonOutputRenderer
       if value == 0
         value = "0 s"
       else
-        value = moment().add(value).fromNow(true)
+        value = @intervalToString(value)
 
     return value
