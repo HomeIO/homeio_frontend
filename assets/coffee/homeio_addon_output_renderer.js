@@ -45,7 +45,8 @@
         tableHtml.append(rowHtml);
         for (k = 0, len2 = keys.length; k < len2; k++) {
           keyDef = keys[k];
-          cellHtml = $('<td></td>').text(this.processValue(row, keyDef));
+          cellHtml = $('<td></td>').prop('title', row[keyDef.key]);
+          cellHtml.text(this.processValue(row, keyDef));
           rowHtml.append(cellHtml);
         }
       }

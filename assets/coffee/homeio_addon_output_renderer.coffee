@@ -34,7 +34,8 @@ class @HomeIOAddonOutputRenderer
       rowHtml = $('<tr></tr>')
       tableHtml.append(rowHtml)
       for keyDef in keys
-        cellHtml = $('<td></td>').text(@processValue(row, keyDef))
+        cellHtml = $('<td></td>').prop('title', row[keyDef.key])
+        cellHtml.text(@processValue(row, keyDef))
         rowHtml.append(cellHtml)
 
     $(@container).append(tableHtml)
