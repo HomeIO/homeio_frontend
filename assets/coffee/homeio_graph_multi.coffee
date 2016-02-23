@@ -94,12 +94,21 @@ class @HomeIOMeasGraphMulti
 
   # run everything
   start: () ->
+    @resizeHeight()
     @getFromApi()
 
   # helper, current timestamp in miliseconds
   currentTime: () ->
     (new Date()).getTime()
 
+  resizeHeight: () ->
+    hb = $('body').height() - 40
+    hc = $(@container).height()
+
+    if (hb - hc) > 100
+      if hb < 200
+        h = 200
+      $(@container).height(h) 
 
   # gets everything what is important for drawing graphs
   getFromApi: () ->

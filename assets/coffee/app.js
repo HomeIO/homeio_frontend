@@ -177,6 +177,19 @@
         }).appendTo(context.$element());
       });
     });
+    this.get("#/addons/:addonName/graph/:keyName", function(context) {
+      var keyName;
+      context.app.swap('');
+      keyName = this.params["keyName"];
+      return this.load("/api/addons/" + this.params["addonName"] + "/.json").then(function(data) {
+        var addon;
+        addon = data["object"];
+        return context.render("/assets/templates/addons/graph.haml", {
+          addon: addon,
+          keyName: keyName
+        }).appendTo(context.$element());
+      });
+    });
     return this.get("#/stats", function(context) {
       context.app.swap('');
       return this.load("/api/stats.json").then(function(data) {

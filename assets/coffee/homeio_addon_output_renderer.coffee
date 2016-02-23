@@ -1,9 +1,12 @@
 class @HomeIOAddonOutputRenderer
   constructor: ->
     @name = null
+    @keyName = null
     @container = null
 
     @addonObject = null
+
+    @useGraph = false
 
 
   start: () ->
@@ -15,8 +18,12 @@ class @HomeIOAddonOutputRenderer
       @render()
 
   render: () ->
-    if @addonObject["array"]
-      @renderArray(@addonObject["array"], @addonObject["keys"])
+    if @useGraph == false
+      if @addonObject["array"]
+        @renderArray(@addonObject["array"], @addonObject["keys"])
+    else
+      if @addonObject["array"]
+        @renderGraph(@addonObject["array"], @addonObject["keys"])
 
   renderArray: (array, keys) ->
     tableHtml = $('<table></table>').addClass('pure-table pure-table-striped addonDynamicTable')
@@ -26,7 +33,14 @@ class @HomeIOAddonOutputRenderer
     headHtml.append(rowHtml)
     for keyDef in keys
       key = keyDef.key
-      cellHtml = $('<th></th>').text(key)
+      keyLink = key
+      if key == "time"
+        keyLink = "all"
+
+      headerLink = $('<a></a>').attr("href", "/#/addons/" + @name + "/graph/" + keyLink)
+      headerLink.text(key)
+      cellHtml = $('<th></th>')
+      cellHtml.append(headerLink)
       rowHtml.append(cellHtml)
 
 
@@ -39,6 +53,70 @@ class @HomeIOAddonOutputRenderer
         rowHtml.append(cellHtml)
 
     $(@container).append(tableHtml)
+
+  renderGraph: (array, keys) ->
+    graphElement = $(@container)
+
+    # height
+    h = $('body').height() - 40
+    if h < 200
+      h = 200
+    graphElement.height(h)
+
+    # options
+    @flotOptions =
+      series:
+        lines:
+          show: true
+          fill: true
+        points:
+          show: false
+      legend:
+        show: true
+      grid:
+        clickable: false
+        hoverable: true
+      xaxis:
+        mode: "time"
+        timezone: "browser"
+
+    if @keyName == "all"
+      # use min/avg/max
+      min_data = []
+      avg_data = []
+      max_data = []
+
+      for row in array
+        if row.time
+          min_data.push([new Date(row.time), row.min])
+          avg_data.push([new Date(row.time), row.avg])
+          max_data.push([new Date(row.time), row.max])
+
+      new_data =
+        [
+          data: max_data
+          label: "max"
+        ,
+          data: avg_data
+          label: "avg"
+        ,
+          data: min_data
+          label: "min"
+        ]
+
+      console.log(new_data)
+      @plot = $.plot graphElement, new_data, @flot_options
+
+    else
+      # use regular, one type
+      new_data = []
+      for row in array
+        if row.time
+          new_data.push([new Date(row.time), row[@keyName]])
+        else
+          new_data.push([row[@keyName]])
+
+      @plot = $.plot graphElement, [new_data], @flot_options
 
   timeToString: (t) ->
     date = new Date(parseInt(t))

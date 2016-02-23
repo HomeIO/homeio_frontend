@@ -1,0 +1,20 @@
+%input{type: "hidden", id: "addon-name", value: addon.name}
+%input{type: "hidden", id: "addon-key-name", value: keyName}
+
+.header
+  %h2
+    Addons graph
+  %h1
+    = addon.name
+    = " - "
+    = keyName
+
+.content-inner#container
+
+:javascript
+  var r = new HomeIOAddonOutputRenderer;
+  r.useGraph = true;
+  r.name = $("#addon-name").val();
+  r.keyName = $("#addon-key-name").val();
+  r.container = "#container";
+  r.start();

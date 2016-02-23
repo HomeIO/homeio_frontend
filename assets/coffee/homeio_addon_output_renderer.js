@@ -3,8 +3,10 @@
   this.HomeIOAddonOutputRenderer = (function() {
     function HomeIOAddonOutputRenderer() {
       this.name = null;
+      this.keyName = null;
       this.container = null;
       this.addonObject = null;
+      this.useGraph = false;
     }
 
     HomeIOAddonOutputRenderer.prototype.start = function() {
@@ -21,13 +23,19 @@
     };
 
     HomeIOAddonOutputRenderer.prototype.render = function() {
-      if (this.addonObject["array"]) {
-        return this.renderArray(this.addonObject["array"], this.addonObject["keys"]);
+      if (this.useGraph === false) {
+        if (this.addonObject["array"]) {
+          return this.renderArray(this.addonObject["array"], this.addonObject["keys"]);
+        }
+      } else {
+        if (this.addonObject["array"]) {
+          return this.renderGraph(this.addonObject["array"], this.addonObject["keys"]);
+        }
       }
     };
 
     HomeIOAddonOutputRenderer.prototype.renderArray = function(array, keys) {
-      var cellHtml, headHtml, i, j, k, key, keyDef, len, len1, len2, row, rowHtml, tableHtml;
+      var cellHtml, headHtml, headerLink, i, j, k, key, keyDef, keyLink, len, len1, len2, row, rowHtml, tableHtml;
       tableHtml = $('<table></table>').addClass('pure-table pure-table-striped addonDynamicTable');
       headHtml = $('<thead></thead');
       tableHtml.append(headHtml);
@@ -36,7 +44,14 @@
       for (i = 0, len = keys.length; i < len; i++) {
         keyDef = keys[i];
         key = keyDef.key;
-        cellHtml = $('<th></th>').text(key);
+        keyLink = key;
+        if (key === "time") {
+          keyLink = "all";
+        }
+        headerLink = $('<a></a>').attr("href", "/#/addons/" + this.name + "/graph/" + keyLink);
+        headerLink.text(key);
+        cellHtml = $('<th></th>');
+        cellHtml.append(headerLink);
         rowHtml.append(cellHtml);
       }
       for (j = 0, len1 = array.length; j < len1; j++) {
@@ -51,6 +66,76 @@
         }
       }
       return $(this.container).append(tableHtml);
+    };
+
+    HomeIOAddonOutputRenderer.prototype.renderGraph = function(array, keys) {
+      var avg_data, graphElement, h, i, j, len, len1, max_data, min_data, new_data, row;
+      graphElement = $(this.container);
+      h = $('body').height() - 40;
+      if (h < 200) {
+        h = 200;
+      }
+      graphElement.height(h);
+      this.flotOptions = {
+        series: {
+          lines: {
+            show: true,
+            fill: true
+          },
+          points: {
+            show: false
+          }
+        },
+        legend: {
+          show: true
+        },
+        grid: {
+          clickable: false,
+          hoverable: true
+        },
+        xaxis: {
+          mode: "time",
+          timezone: "browser"
+        }
+      };
+      if (this.keyName === "all") {
+        min_data = [];
+        avg_data = [];
+        max_data = [];
+        for (i = 0, len = array.length; i < len; i++) {
+          row = array[i];
+          if (row.time) {
+            min_data.push([new Date(row.time), row.min]);
+            avg_data.push([new Date(row.time), row.avg]);
+            max_data.push([new Date(row.time), row.max]);
+          }
+        }
+        new_data = [
+          {
+            data: max_data,
+            label: "max"
+          }, {
+            data: avg_data,
+            label: "avg"
+          }, {
+            data: min_data,
+            label: "min"
+          }
+        ];
+        console.log(new_data);
+        return this.plot = $.plot(graphElement, new_data, this.flot_options);
+      } else {
+        new_data = [];
+        for (j = 0, len1 = array.length; j < len1; j++) {
+          row = array[j];
+          if (row.time) {
+            new_data.push([new Date(row.time), row[this.keyName]]);
+          } else {
+            new_data.push([row[this.keyName]]);
+          }
+        }
+        return this.plot = $.plot(graphElement, [new_data], this.flot_options);
+      }
     };
 
     HomeIOAddonOutputRenderer.prototype.timeToString = function(t) {

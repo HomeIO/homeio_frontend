@@ -132,7 +132,15 @@ app = $.sammy("#main", ->
         addon: addon
       ).appendTo context.$element()
 
-      
+  @get "#/addons/:addonName/graph/:keyName", (context) ->
+    context.app.swap('')
+    keyName = @params["keyName"]
+    @load("/api/addons/" + @params["addonName"] + "/.json").then (data) ->
+      addon = data["object"]
+      context.render("/assets/templates/addons/graph.haml",
+        addon: addon
+        keyName: keyName
+      ).appendTo context.$element()
 
 
   @get "#/stats", (context) ->

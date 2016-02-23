@@ -59,11 +59,24 @@
     }
 
     HomeIOMeasGraphMulti.prototype.start = function() {
+      this.resizeHeight();
       return this.getFromApi();
     };
 
     HomeIOMeasGraphMulti.prototype.currentTime = function() {
       return (new Date()).getTime();
+    };
+
+    HomeIOMeasGraphMulti.prototype.resizeHeight = function() {
+      var h, hb, hc;
+      hb = $('body').height() - 40;
+      hc = $(this.container).height();
+      if ((hb - hc) > 100) {
+        if (hb < 200) {
+          h = 200;
+        }
+        return $(this.container).height(h);
+      }
     };
 
     HomeIOMeasGraphMulti.prototype.getFromApi = function() {
