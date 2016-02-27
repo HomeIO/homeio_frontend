@@ -21,9 +21,40 @@ class @HomeIOAddonOutputRenderer
     if @useGraph == false
       if @addonObject["array"]
         @renderArray(@addonObject["array"], @addonObject["keys"])
+      else if @addonObject["hash"]
+        @renderHash(@addonObject["hash"])
     else
       if @addonObject["array"]
         @renderGraph(@addonObject["array"], @addonObject["keys"])
+
+  renderHash: (hash) ->
+    tableHtml = $('<table></table>').addClass('pure-table pure-table-striped addonDynamicTable')
+    headHtml = $('<thead></thead')
+    tableHtml.append(headHtml)
+    rowHtml = $('<tr></tr>')
+    headHtml.append(rowHtml)
+
+    cellHtml = $('<th></th>')
+    cellHtml.text("Key")
+    rowHtml.append(cellHtml)
+
+    cellHtml = $('<th></th>')
+    cellHtml.text("Value")
+    rowHtml.append(cellHtml)
+
+    $.each hash, (key, value) ->
+      rowHtml = $('<tr></tr>')
+      tableHtml.append(rowHtml)
+
+      cellHtml = $('<td></td>')
+      cellHtml.text(key)
+      rowHtml.append(cellHtml)
+
+      cellHtml = $('<td></td>')
+      cellHtml.text(value)
+      rowHtml.append(cellHtml)
+
+    $(@container).append(tableHtml)
 
   renderArray: (array, keys) ->
     tableHtml = $('<table></table>').addClass('pure-table pure-table-striped addonDynamicTable')

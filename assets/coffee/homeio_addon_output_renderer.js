@@ -26,12 +26,40 @@
       if (this.useGraph === false) {
         if (this.addonObject["array"]) {
           return this.renderArray(this.addonObject["array"], this.addonObject["keys"]);
+        } else if (this.addonObject["hash"]) {
+          return this.renderHash(this.addonObject["hash"]);
         }
       } else {
         if (this.addonObject["array"]) {
           return this.renderGraph(this.addonObject["array"], this.addonObject["keys"]);
         }
       }
+    };
+
+    HomeIOAddonOutputRenderer.prototype.renderHash = function(hash) {
+      var cellHtml, headHtml, rowHtml, tableHtml;
+      tableHtml = $('<table></table>').addClass('pure-table pure-table-striped addonDynamicTable');
+      headHtml = $('<thead></thead');
+      tableHtml.append(headHtml);
+      rowHtml = $('<tr></tr>');
+      headHtml.append(rowHtml);
+      cellHtml = $('<th></th>');
+      cellHtml.text("Key");
+      rowHtml.append(cellHtml);
+      cellHtml = $('<th></th>');
+      cellHtml.text("Value");
+      rowHtml.append(cellHtml);
+      $.each(hash, function(key, value) {
+        rowHtml = $('<tr></tr>');
+        tableHtml.append(rowHtml);
+        cellHtml = $('<td></td>');
+        cellHtml.text(key);
+        rowHtml.append(cellHtml);
+        cellHtml = $('<td></td>');
+        cellHtml.text(value);
+        return rowHtml.append(cellHtml);
+      });
+      return $(this.container).append(tableHtml);
     };
 
     HomeIOAddonOutputRenderer.prototype.renderArray = function(array, keys) {
