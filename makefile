@@ -1,4 +1,14 @@
 go-deps:
+	GO111MODULE=off go get github.com/gin-gonic/gin
+	GO111MODULE=off  go get github.com/gin-gonic/contrib/gzip
+
+run:
+	GO111MODULE=off go run homeio.go
+
+release:
+		GO111MODULE=off GIN_MODE=release go run homeio.go
+
+go-deps-old:
 	go get github.com/gin-gonic/gin
 	go get github.com/gin-gonic/contrib/gzip
 
@@ -14,8 +24,5 @@ js:
   done; \
   true
 
-run:
+run-old:
 	go run homeio.go
-
-release:
-	GIN_MODE=release	go run homeio.go
